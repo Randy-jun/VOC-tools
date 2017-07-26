@@ -21,6 +21,7 @@ pred = m.net.Sigmoid(fc_1, "pred")
 [softmax, loss] = m.net.SoftmaxWithLoss([pred, "label"], ["softmax", "loss"])
 
 m.AddGradientOperators([loss])
+
 print(str(m.net.Proto()))
 print("---------------------------")
 print(str(m.param_init_net.Proto()))
@@ -29,7 +30,7 @@ workspace.RunNetOnce(m.param_init_net)
 
 workspace.CreateNet(m.net)
 
-for j in range(0, 100000):
+for j in range(0, 100):
     data = np.random.rand(16, 100).astype(np.float32)
     label = (np.random.rand(16) * 10).astype(np.int32)
     workspace.FeedBlob("data", data)
