@@ -39,7 +39,8 @@ def setLabel(label, index):
 	# print(label)
 	# print(len(label), index)
 	tmp = int(label[index - 1])
-	tmp += 1
+	# tmp += 1 May not need to count the number of the object
+        tmp = 1
 	if (index < 20) & (index > 1):
 		label = label[:index - 1] + str(tmp) + label[index:]
 	elif 1 == index:
@@ -175,16 +176,16 @@ for dataset in datasets:
 
 				tmp_label = setLabel(tmp_label, tmp_flag)
 
-				tmp_label21 = setLabel(tmp_label21, tmp_flag)
-				tmp_label22 = setLabel(tmp_label22, tmp_flag)
-				tmp_label23 = setLabel(tmp_label23, tmp_flag)
-				tmp_label24 = setLabel(tmp_label24, tmp_flag)
+				tmp_label21 = tmp_label # setLabel(tmp_label21, tmp_flag) # The same label of the tmple.
+				tmp_label22 = tmp_label # setLabel(tmp_label22, tmp_flag) # The same label of the tmple.
+				tmp_label23 = tmp_label # setLabel(tmp_label23, tmp_flag) # The same label of the tmple.
+				tmp_label24 = tmp_label # setLabel(tmp_label24, tmp_flag) # The same label of the tmple.
 
 				# 4[1-4] follow the clockwise , first is top-left
- 				tmp_label41 = setLabel(tmp_label41, tmp_flag)
-				tmp_label42 = setLabel(tmp_label42, tmp_flag)
-				tmp_label43 = setLabel(tmp_label43, tmp_flag)
-				tmp_label44 = setLabel(tmp_label44, tmp_flag)
+ 				tmp_label41 = tmp_label # setLabel(tmp_label41, tmp_flag) # The same label of the tmple.
+				tmp_label42 = tmp_label # setLabel(tmp_label42, tmp_flag) # The same label of the tmple.
+				tmp_label43 = tmp_label # setLabel(tmp_label43, tmp_flag) # The same label of the tmple.
+				tmp_label44 = tmp_label # setLabel(tmp_label44, tmp_flag) # The same label of the tmple.
 
 				# cv2.namedWindow(win_name, cv2.WINDOW_AUTOSIZE)
 				# cv2.imshow(win_name, img[x_label[k + 2][0]:x_label[k + 2][1], x_label[k + 1][0]:x_label[k + 2][1]])
@@ -295,7 +296,7 @@ for dataset in datasets:
 				# cv2.imshow(win_name, sub_img44)
 				# cv2.waitKey(0)
 				# exit()
-		new_labels.append((image_path, m_label))
+		# new_labels.append((image_path, m_label)) Just the single classifier
 
 	with open(os.path.join(root_dir, dataset, "label", "label.txt"), 'w') as fo:
 		for k, label in enumerate(new_labels):
@@ -303,8 +304,8 @@ for dataset in datasets:
 			fo.write(str(label[0]) + " " + str(label[1])+ "\n")
 		fo.close()
 
-	with open(os.path.join(root_dir, dataset, "label", "label.txt"), 'r') as fi:
-		lsof = fi.readlines()
-		print(len(lsof[0].split()[1]))
-		fi.close()
+	# with open(os.path.join(root_dir, dataset, "label", "label.txt"), 'r') as fi:
+	#	lsof = fi.readlines()
+	#	print(len(lsof[0].split()[1]))
+	#	fi.close()
 
