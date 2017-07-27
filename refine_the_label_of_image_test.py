@@ -39,8 +39,8 @@ def setLabel(label, index):
 	# print(label)
 	# print(len(label), index)
 	tmp = int(label[index - 1])
-	tmp += 1
-	
+	# tmp += 1 May not need to count the number of the object
+	tmp = 1
 	if (index < 20) & (index > 1):
 		label = label[:index - 1] + str(tmp) + label[index:]
 	elif 1 == index:
@@ -296,7 +296,7 @@ for dataset in datasets:
 				# cv2.imshow(win_name, sub_img44)
 				# cv2.waitKey(0)
 				# exit()
-		new_labels.append((image_path, m_label)) Just the single classifier
+		# new_labels.append((image_path, m_label)) Just the single classifier
 
 	with open(os.path.join(root_dir, dataset, "label", "label.txt"), 'w') as fo:
 		for k, label in enumerate(new_labels):

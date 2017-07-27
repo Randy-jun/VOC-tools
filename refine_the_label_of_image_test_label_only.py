@@ -39,8 +39,8 @@ def setLabel(label, index):
 	# print(label)
 	# print(len(label), index)
 	tmp = int(label[index - 1])
-	tmp += 1
-	
+	# tmp += 1 May not need to count the number of the object
+	tmp = 1
 	if (index < 20) & (index > 1):
 		label = label[:index - 1] + str(tmp) + label[index:]
 	elif 1 == index:
@@ -131,14 +131,14 @@ for dataset in datasets:
 
 	for k, label_path in enumerate(label_paths):
 		image_path = image_paths[k]
-		print(image_path, label_path)
-		img = cv2.imread(image_path, cv2.IMREAD_COLOR)#.astype(np.float32)
+		# print(image_path, label_path)
+		# img = cv2.imread(image_path, cv2.IMREAD_COLOR)#.astype(np.float32)
 
 		# pyplot.figure()
 		# pyplot.imshow(img)
 
-		cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
-		cv2.imshow('img', img)
+		# cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
+		# cv2.imshow('img', img)
 # 		cv2.waitKey(0)
 # 		cv2.destroyAllWindows()
 
@@ -166,7 +166,7 @@ for dataset in datasets:
 				tmp_label23 = s_label[:]
 				tmp_label24 = s_label[:]
 
-				# 4[1-4] follow the clockwise
+				# # 4[1-4] follow the clockwise
  				tmp_label41 = s_label[:]
 				tmp_label42 = s_label[:]
 				tmp_label43 = s_label[:]
@@ -187,12 +187,12 @@ for dataset in datasets:
 				tmp_label43 = tmp_label # setLabel(tmp_label43, tmp_flag) # The same label of the tmple.
 				tmp_label44 = tmp_label # setLabel(tmp_label44, tmp_flag) # The same label of the tmple.
 
-				# cv2.namedWindow(win_name, cv2.WINDOW_AUTOSIZE)
-				# cv2.imshow(win_name, img[x_label[k + 2][0]:x_label[k + 2][1], x_label[k + 1][0]:x_label[k + 2][1]])
+				cv2.namedWindow(win_name, cv2.WINDOW_AUTOSIZE)
+				cv2.imshow(win_name, img[x_label[k + 2][0]:x_label[k + 2][1], x_label[k + 1][0]:x_label[k + 2][1]])
 
 				tmp_width = x_label[k + 1][1] - x_label[k + 1][0]
 				tmp_high = x_label[k + 2][1] - x_label[k + 2][0]
-				
+				'''
 				sub_img = img[x_label[k + 2][0]:x_label[k + 2][1], x_label[k + 1][0]:x_label[k + 1][1]]
 
 				sub_img21 = img[x_label[k + 2][0]:(x_label[k + 2][1] - (tmp_high // 2)), x_label[k + 1][0]:x_label[k + 1][1]]
@@ -204,7 +204,7 @@ for dataset in datasets:
 				sub_img42 = img[x_label[k + 2][0]:(x_label[k + 2][1] - (tmp_high // 2)), (x_label[k + 1][0] + (tmp_width // 2)):x_label[k + 1][1]]
 				sub_img43 = img[(x_label[k + 2][0] + (tmp_high // 2)):x_label[k + 2][1], (x_label[k + 1][0] + (tmp_width // 2)):x_label[k + 1][1]]
 				sub_img44 = img[(x_label[k + 2][0] + (tmp_high // 2)):x_label[k + 2][1], x_label[k + 1][0]:(x_label[k + 1][1] - (tmp_width // 2))]
-
+				'''
 				win_name = x_label[k][1] + str(k) + "sub"
 				tmp_file = os.path.join(root_dir, dataset , "image", x_label[0][1][:-4] + win_name + ".jpg")
 
@@ -218,7 +218,7 @@ for dataset in datasets:
 				tmp_file43 = os.path.join(root_dir, dataset , "image", x_label[0][1][:-4] + win_name + "43.jpg")
 				tmp_file44 = os.path.join(root_dir, dataset , "image", x_label[0][1][:-4] + win_name + "44.jpg")
 
-
+				'''
 				if True != os.path.exists(tmp_file):
 					cv2.imwrite(tmp_file, sub_img, [int(cv2.IMWRITE_JPEG_QUALITY), 10])
 
@@ -247,7 +247,7 @@ for dataset in datasets:
 
 				if True != os.path.exists(tmp_file44):
 					cv2.imwrite(tmp_file44, sub_img44, [int(cv2.IMWRITE_JPEG_QUALITY), 10])
-
+				'''
 				new_labels.append((tmp_file, tmp_label))
 
 				new_labels.append((tmp_file21, tmp_label21))
@@ -296,11 +296,13 @@ for dataset in datasets:
 				# cv2.imshow(win_name, sub_img44)
 				# cv2.waitKey(0)
 				# exit()
-		new_labels.append((image_path, m_label)) Just the single classifier
+		# new_labels.append((image_path, m_label))
+		new_labels.append((image_path, m_label))
 
 	with open(os.path.join(root_dir, dataset, "label", "label.txt"), 'w') as fo:
+	# with open(os.path.join(root_dir, dataset, "label", "label_s_only.txt"), 'w') as fo:
 		for k, label in enumerate(new_labels):
-			print(str(label))
+			# print(str(label))
 			fo.write(str(label[0]) + " " + str(label[1])+ "\n")
 		fo.close()
 
