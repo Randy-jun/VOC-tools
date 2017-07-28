@@ -106,11 +106,11 @@ script_dir = os.getcwd()
 datasets = ["test"]
 
 for dataset in datasets:
-	mew_image_path = os.path.join(root_dir, dataset , "image")
+	new_image_path = os.path.join(root_dir, dataset , "image")
 	mew_label_path = os.path.join(root_dir, dataset , "label")
 	
-	if True != os.path.exists(mew_image_path):
-		os.makedirs(mew_image_path)
+	if True != os.path.exists(new_image_path):
+		os.makedirs(new_image_path)
 
 	if True != os.path.exists(mew_label_path):
 		os.makedirs(mew_label_path)

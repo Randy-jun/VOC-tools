@@ -114,11 +114,11 @@ script_dir = os.getcwd()
 datasets = ["trainval"]
 
 for dataset in datasets:
-	mew_image_path = os.path.join(root_dir, dataset , "image")
+	new_image_path = os.path.join(root_dir, dataset , "image")
 	mew_label_path = os.path.join(root_dir, dataset , "label")
 	
-	if True != os.path.exists(mew_image_path):
-		os.makedirs(mew_image_path)
+	if True != os.path.exists(new_image_path):
+		os.makedirs(new_image_path)
 
 	if True != os.path.exists(mew_label_path):
 		os.makedirs(mew_label_path)
@@ -199,11 +199,12 @@ for dataset in datasets:
 
 				# print(img[x_label[k + 2][0]:x_label[k + 2][1], x_label[k + 1][0]:x_label[k + 2][1]].shape)
 
-		new_labels.append((image_path, m_label))
+		if 1 == m_label.count("1"):
+			new_labels.append((image_path, m_label))
 
 	# print(new_labels[:])
 
-	with open(os.path.join(root_dir, dataset, "label", "label.txt"), 'w') as fo:
+	with open(os.path.join(root_dir, dataset, "label", "label_count_1.txt"), 'w') as fo:
 		for k, label in enumerate(new_labels):
 			print(str(label))
 			fo.write(str(label[0]) + " " + str(label[1])+ "\n")
