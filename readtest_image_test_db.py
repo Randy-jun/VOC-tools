@@ -54,15 +54,22 @@ def read_data_db(dbpath):
 			cv2.destroyAllWindows()
 
 def main():
-	# print(lmdb.version())
-	label_paths = os.path.expanduser("~/data/VOCdevkit/trainval/label/label_count_1.txt")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/trainvlaDB_t200_lmdb")
-	if True == os.path.exists(db_path):
-		print(db_path + "IS EXISTS")
-		# exit()
-
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
 	read_data_db(db_path)
-	# read_data_db("/home/yroot/data")
+	print(db_path + "is OK!")
+
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
+	read_data_db(db_path)
+	print(db_path + " is OK!")
+
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
+	read_data_db(db_path)
+	print(db_path + "is OK!")
+
+	db_path = db_path + "quarter_lmdb"
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
+	read_data_db(db_path)
+	print(db_path + "is OK!")
 
 
 if __name__ == '__main__':
