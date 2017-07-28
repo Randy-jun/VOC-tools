@@ -184,7 +184,7 @@ def main():
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_sub_lmdb")
 	# create_data_db(db_path, img_sub[:200], lab_sub[:200])
-	create_data_db(db_path, image_paths, labels)
+	create_data_db(db_path, img_sub, lab_sub)
 
 	read_data_db(db_path)
 	print(db_path + "is OK!")
@@ -192,7 +192,7 @@ def main():
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_top_bottom_lmdb")
 	# create_data_db(db_path, img_top_bottom[:200], lab_top_bottom[:200])
-	create_data_db(db_path, img_top_bottom[:200], lab_top_bottom)
+	create_data_db(db_path, img_top_bottom, lab_top_bottom)
 	read_data_db(db_path)
 
 	print(db_path + " is OK!")
@@ -200,7 +200,7 @@ def main():
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_left_right_lmdb")
 	# create_data_db(db_path, img_left_right[:200], lab_left_right[:200])
-	create_data_db(db_path, img_left_right[:200], lab_left_right)
+	create_data_db(db_path, img_left_right, lab_left_right)
 	read_data_db(db_path)
 
 	print(db_path + "is OK!")
@@ -208,7 +208,7 @@ def main():
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_quarter_lmdb")
 	# create_data_db(db_path, img_quarter[:200], lab_quarter[:200])
-	create_data_db(db_path, img_quarter[:200], lab_quarter)
+	create_data_db(db_path, img_quarter, lab_quarter)
 	read_data_db(db_path)
 
 	print(db_path + "is OK!")
