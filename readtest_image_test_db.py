@@ -54,20 +54,23 @@ def read_data_db(dbpath):
 			cv2.destroyAllWindows()
 
 def main():
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
+	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_sub_lmdb")
 	read_data_db(db_path)
 	print(db_path + "is OK!")
 
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
+	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_top_bottom_lmdb")
 	read_data_db(db_path)
 	print(db_path + " is OK!")
 
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
+	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_left_right_lmdb")
 	read_data_db(db_path)
 	print(db_path + "is OK!")
 
-	db_path = db_path + "quarter_lmdb"
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
+	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_quarter_lmdb")
 	read_data_db(db_path)
 	print(db_path + "is OK!")
 
