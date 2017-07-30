@@ -43,6 +43,7 @@ def read_data_db(dbpath):
 	for _ in range(0, 1):
 		workspace.RunNet(model.net.Proto().name)
 		img_datas = workspace.FetchBlob("data")
+		print(img_datas.shape)
 		labels = workspace.FetchBlob("label")
 
 		for k in xrange(0, batch_size):

@@ -35,6 +35,9 @@ def read_data_db(dbpath):
 	# display(db_env)
 	# exit()
 	model = model_helper.ModelHelper(name="lmdbtest")
+	# data, label = model.TensorProtosDBInput(
+	# 	[], ["data", "label"], batch_size = batch_size,
+	# 	db=dbpath, db_type="lmdb")
 	data, label = model.TensorProtosDBInput(
 		[], ["data", "label"], batch_size = batch_size,
 		db=dbpath, db_type="lmdb")
@@ -43,6 +46,7 @@ def read_data_db(dbpath):
 	for _ in range(0, 1):
 		workspace.RunNet(model.net.Proto().name)
 		img_datas = workspace.FetchBlob("data")
+		print(data.shape)
 		labels = workspace.FetchBlob("label")
 
 		for k in xrange(0, batch_size):

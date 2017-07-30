@@ -40,8 +40,20 @@ current_folder = os.path.join(os.path.expanduser("~"), "data/VOCdevkit/dataDB")
 data_folder = os.path.join(current_folder)
 root_folder = os.path.join(current_folder, 'test_files')
 
+train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
+train_data_db_type = "lmdb"
+train_data_count = 200
+
+
+test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
+test_data_db_type = "lmdb"
+
 gpus = [0]
+num_labels = 20
 batch_size = 10
+base_learning_rate = 0.0004 * batch_size
+
+stepsize = int(10 * train_data_count / batch_size)
 weight_decay = 1e-4
 
 if not os.path.exists(data_folder):
@@ -49,31 +61,30 @@ if not os.path.exists(data_folder):
 if os.path.exists(root_folder):
     print("Looks like you ran this before, so we need to cleanup those old files...")
     shutil.rmtree(root_folder)
-
+print(root_folder)
 os.makedirs(root_folder)
-workspace.ResetWorkspace(root_folder)
 
 print("training data folder:" + data_folder)
 print("workspace root folder:" + root_folder)
 
+workspace.ResetWorkspace(root_folder)
+
 # In[15]:
+train_model = model_helper.ModelHelper(name = "train")
 
-def AddInput(model, batch_size, db, db_type):
+reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
+
+def AddInput_ops(model):
     # load the data
-    data_uint8, label = model.TensorProtosDBInput(
-        [], ["data_uint8", "label"], batch_size=batch_size,
-        db=db, db_type=db_type)
-    # cast the data to float
-    data = model.Cast(data_uint8, "data", to=core.DataType.FLOAT)
-    # scale data from [0,255] down to [0,1]
-    data = model.Scale(data, data, scale=float(1./256))
-    # don't need the gradient for the backward pass
+    data, label = brew.image_input(
+    	model,
+    	reader,
+    	["data", "label"],
+    	batch_size = batch_size,
+    )
     data = model.StopGradient(data, data)
-    return data, label
 
-# In[16]:
-
-def AddTest_model(model, data, label):
+def TestModel_ops(model, data, label):
     # Image size: 28 x 28 -> 24 x 24
     conv1 = brew.conv(model, data, 'conv1', dim_in=1, dim_out=20, kernel=5)
     # Image size: 24 x 24 -> 12 x 12
@@ -87,10 +98,45 @@ def AddTest_model(model, data, label):
     fc3 = brew.relu(model, fc3, fc3)
     pred = brew.fc(model, fc3, 'pred', 500, 10)
     softmax = brew.softmax(model, pred, 'softmax')
-    return softmax
+   
+    xent = model.LabelCrossEntropy([softmax, label], 'xent')
+    # compute the expected loss
+    loss = model.AveragedLoss(xent, "loss")
+    return [softmax, loss]
+
+def CreateTestModel_ops(model, loss_scale = 1.0):
+	[softmax, loss] = TestModel_ops(model, "data", "label")
+	prefix = model.net.Proto().name
+	loss = model.net.Scale(loss,prefix + "_loos", scale = loss_scale)
+	brew.accuracy(model, [softmax, "label"], prefix + "_accuracy")
+	return loss
 
 
-# In[17]:
+def AddParameterUpdate_ops(model):
+	brew.add_weight_decay(model, weight_decay)
+	iter = brew.iter(model, "iter")
+	lr = model.net.LearningRate(
+		[iter],
+		"lr",
+		base_lr = base_learning_rate,
+		policy = "step",
+		stepsize = stepsize,
+		gamma = 0.1,
+	)
+	for param in model.GetParams():
+		param_grad = model.param_to_grad[param]
+		param_momentum = model.param_init_net.ConstantFill(
+			[param], param + "_momentum", value=0.0
+		)
+
+		model.net.MomentumSGDUpdate(
+			[param_grad, param_momentum, lr, param],
+			[param_grad, param_momentum, param],
+			momentum = 0.9,
+			nesterov=1,
+		)
+
+exit()
 
 def AddAccuracy(model, softmax, label):
     accuracy = brew.accuracy(model, [softmax, label], "accuracy")
