@@ -26,13 +26,17 @@ import shutil
 import time
 # from IPython import display
 
-from caffe2.python import core, model_helper, net_drawer, workspace, visualize, brew
+from caffe2.python import core, model_helper, net_drawer, workspace, visualize, brew, memonger
+from caffe2.python.models import resnet
 from caffe2.proto import caffe2_pb2
 
 # If you would like to see some really detailed initializations,
 # you can change --caffe2_log_level=0 to --caffe2_log_level=-1
 
 # workspace.ResetWorkspace()
+# print(dir(brew.image_input()))
+# exit()
+
 workspace.GlobalInit(['caffe2', '--caffe2_log_level=1'])
 
 current_folder = os.path.join(os.path.expanduser("~"), "data/VOCdevkit/dataDB")
@@ -48,9 +52,11 @@ train_data_count = 200
 test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
 test_data_db_type = "lmdb"
 
+arg_scope = {"order": "NCHW"}
+
 gpus = [0]
 num_labels = 20
-batch_size = 10
+batch_size = 1
 base_learning_rate = 0.0004 * batch_size
 
 stepsize = int(10 * train_data_count / batch_size)
@@ -72,31 +78,47 @@ workspace.ResetWorkspace(root_folder)
 # In[15]:
 train_model = model_helper.ModelHelper(name = "train")
 
-reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
-
+# reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
+reader = [train_data_db, train_data_db_type]
 def AddInput_ops(model):
-    # load the data
-    data, label = brew.image_input(
-    	model,
-    	reader,
-    	["data", "label"],
-    	batch_size = batch_size,
-    )
+    # load the dataset
+    data, label = model.TensorProtosDBInput(
+		[], ["data", "label"], batch_size = batch_size,
+		db=reader[0], db_type=reader[1])
+    # data, label = brew.image_input(
+    # 	model,
+    # 	reader,
+    # 	["data", "label"],
+    # 	order = "NCHW",
+    # 	batch_size = batch_size,
+    # 	scale = 227,
+    # 	crop = 227,
+    # )
     data = model.StopGradient(data, data)
 
 def TestModel_ops(model, data, label):
-    # Image size: 28 x 28 -> 24 x 24
-    conv1 = brew.conv(model, data, 'conv1', dim_in=1, dim_out=20, kernel=5)
-    # Image size: 24 x 24 -> 12 x 12
+    # Image size: 227 x 227 -> 224 x 224
+    conv1 = brew.conv(model, data, 'conv1', dim_in=3, dim_out=16, kernel=4)
     pool1 = brew.max_pool(model, conv1, 'pool1', kernel=2, stride=2)
-    # Image size: 12 x 12 -> 8 x 8
-    conv2 = brew.conv(model, pool1, 'conv2', dim_in=20, dim_out=50, kernel=5)
-    # Image size: 8 x 8 -> 4 x 4
-    pool2 = brew.max_pool(model, conv2, 'pool2', kernel=2, stride=2)
-    # 50 * 4 * 4 stands for dim_out from previous layer multiplied by the image size
-    fc3 = brew.fc(model, pool2, 'fc3', dim_in=50 * 4 * 4, dim_out=500)
-    fc3 = brew.relu(model, fc3, fc3)
-    pred = brew.fc(model, fc3, 'pred', 500, 10)
+    # Image size: 112 x 112 -> 110 x 110
+    conv2 = brew.conv(model, pool1, 'conv2', dim_in=16, dim_out=32, kernel=3)
+    pool2 = brew.max_pool(model, pool1, 'pool2', kernel=2, stride=2)
+
+    # Image size: 55 x 55 -> 52 x 52
+    conv3 = brew.conv(model, pool2, 'conv3', dim_in=32, dim_out=64, kernel=4)
+    pool3 = brew.max_pool(model, conv3, 'pool3', kernel=2, stride=2)
+
+    # Image size: 26 x 26 -> 24 x 24
+    conv4 = brew.conv(model, pool3, 'conv4', dim_in=64, dim_out=128, kernel=3)
+    pool4 = brew.max_pool(model, conv4, 'pool4', kernel=2, stride=2)
+
+    # Image size: 12 x 12 -> 10 x 10
+    conv5 = brew.conv(model, pool4, 'conv5', dim_in=128, dim_out=256, kernel=3)
+
+    fc1 = brew.fc(model, conv5, 'fc1', dim_in=256 * 10 * 10, dim_out=4096)
+    fc1 = brew.relu(model, fc1, fc1)
+    pred = brew.fc(model, fc1, 'pred', 4096, 20)
+
     softmax = brew.softmax(model, pred, 'softmax')
    
     xent = model.LabelCrossEntropy([softmax, label], 'xent')
@@ -104,12 +126,62 @@ def TestModel_ops(model, data, label):
     loss = model.AveragedLoss(xent, "loss")
     return [softmax, loss]
 
+# def TestModel_ops(model, data, label):
+#     # Image size: 227 x 227 -> 224 x 224
+#     conv1 = brew.conv(model, data, 'conv1', dim_in=3, dim_out=64, kernel=3)
+#     # conv1 = brew.relu(model, conv1, conv1)
+#     conv2 = brew.conv(model, conv1, 'conv2', dim_in=64, dim_out=64, kernel=3)
+#     # conv2 = brew.relu(model, conv2, conv2)
+#     pool1 = brew.max_pool(model, conv2, 'pool1', kernel=2, stride=2)
+
+#     # Image size: 112 x 112 -> 108 x 108
+#     conv3 = brew.conv(model, pool1, 'conv3', dim_in=64, dim_out=128, kernel=3)
+#     # conv3 = brew.relu(model, conv3, conv3)
+#     conv4 = brew.conv(model, conv3, 'conv4', dim_in=128, dim_out=128, kernel=3)
+#     # conv4 = brew.relu(model, conv4, conv4)
+#     pool2 = brew.max_pool(model, conv4, 'pool2', kernel=2, stride=2)
+
+# 	# Image size: 54 x 54 -> 50 x 50
+#     conv5 = brew.conv(model, pool2, 'conv5', dim_in=128, dim_out=256, kernel=3)
+#     # conv5 = brew.relu(model, conv5, conv5)
+#     conv6 = brew.conv(model, conv5, 'conv6', dim_in=256, dim_out=256, kernel=3)
+#     # conv6 = brew.relu(model, conv6, conv6)
+#     pool3 = brew.max_pool(model, conv6, 'pool3', kernel=2, stride=2)
+
+#     # Image size: 25 x 25 -> 20 x 20
+#     conv7 = brew.conv(model, pool3, 'conv7', dim_in=256, dim_out=512, kernel=4)
+#     # conv7 = brew.relu(model, conv7, conv7)
+#     conv8 = brew.conv(model, conv7, 'conv8', dim_in=512, dim_out=512, kernel=3)
+#     # conv8 = brew.relu(model, conv8, conv8)
+#     pool4 = brew.max_pool(model, conv7, 'pool4', kernel=2, stride=2)
+
+#     # Image size: 10 x 10 -> 6 x 6
+#     conv9 = brew.conv(model, pool4, 'conv9', dim_in=512, dim_out=512, kernel=3)
+#     # conv9 = brew.relu(model, conv9, conv9)
+#     conv10 = brew.conv(model, conv9, 'conv10', dim_in=512, dim_out=512, kernel=3)
+#     # conv10 = brew.relu(model, conv10, conv10)
+
+#     fc1 = brew.fc(model, conv10, 'fc1', dim_in=512 * 6 * 6, dim_out=4096)
+#     fc1 = brew.relu(model, fc1, fc1)
+
+#     pred = brew.fc(model, fc1, 'pred', 4096, 20)
+
+#     softmax = brew.softmax(model, pred, 'softmax')
+   
+#     xent = model.LabelCrossEntropy([softmax, label], 'xent')
+#     # compute the expected loss
+#     loss = model.AveragedLoss(xent, "loss")
+#     return [softmax, loss]
+
 def CreateTestModel_ops(model, loss_scale = 1.0):
 	[softmax, loss] = TestModel_ops(model, "data", "label")
+	# [softmax, loss] = resnet.create_resnet50(model, "data", num_input_channels = 3, num_labels = num_labels, label = "label",)
 	prefix = model.net.Proto().name
-	loss = model.net.Scale(loss,prefix + "_loos", scale = loss_scale)
+	# print(dir(model.net.Proto().ListFields()))
+	loss = model.net.Scale(loss, prefix + "_loos", scale = loss_scale)
 	brew.accuracy(model, [softmax, "label"], prefix + "_accuracy")
-	return loss
+
+	return [loss]
 
 
 def AddParameterUpdate_ops(model):
@@ -136,11 +208,59 @@ def AddParameterUpdate_ops(model):
 			nesterov=1,
 		)
 
-exit()
+def OptimizeGradientMemory(model, loss):
+	model.net._net = memonger.share_grad_blobs(
+		model.net,
+		loss,
+		set(model.param_to_grad.values()),
+		namescope = "imonaboat",
+		share_activations = False,
+	)
 
-def AddAccuracy(model, softmax, label):
-    accuracy = brew.accuracy(model, [softmax, label], "accuracy")
-    return accuracy
+device_opt = core.DeviceOption(caffe2_pb2.CUDA, gpus[0])
+# with core.NameScope("imonaboat"):
+with core.DeviceScope(device_opt):
+	AddInput_ops(train_model)
+	losses = CreateTestModel_ops(train_model)
+	blobs_to_gradients = train_model.AddGradientOperators(losses)
+	AddParameterUpdate_ops(train_model)
+OptimizeGradientMemory(train_model, [blobs_to_gradients[losses[0]]])
+
+workspace.RunNetOnce(train_model.param_init_net)
+workspace.CreateNet(train_model.net, overwrite = True)
+############################################
+
+Num_Epochs = 100
+
+############################################
+loss = []
+accuracy = []
+for epoch in range(Num_Epochs):
+	num_iters = int(train_data_count / batch_size)
+	for iter in range(num_iters):
+		t1 = time.time()
+		workspace.RunNet(train_model.net.Proto().name)
+		t2 = time.time()
+		dt = t2 - t1
+		loss.append(workspace.FetchBlob("loss"))
+		accuracy.append(workspace.FetchBlob("train_accuracy"))
+
+		print((
+			"Finished iteration {:>" + str(len(str(num_iters))) + "}/{}" +
+            " (epoch {:>" + str(len(str(Num_Epochs))) + "}/{})" + 
+            " ({:.2f} images/sec)").
+            format(iter+1, num_iters, epoch+1, Num_Epochs, batch_size/dt
+		))
+
+pyplot.figure(1)
+pyplot.plot(loss, 'b')
+pyplot.plot(accuracy, 'r')
+pyplot.legend(('Loss', 'Accuracy'), loc='upper right')
+pyplot.show()
+'''
+# def AddAccuracy(model, softmax, label):
+#     accuracy = brew.accuracy(model, [softmax, label], "accuracy")
+#     return accuracy
 
 
 # In[18]:
@@ -280,3 +400,4 @@ pyplot.figure(2)
 pyplot.plot(test_accuracy, 'r')
 pyplot.title('Acuracy over test batches.')
 pyplot.show()
+'''
