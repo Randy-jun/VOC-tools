@@ -56,7 +56,7 @@ arg_scope = {"order": "NCHW"}
 
 gpus = [0]
 num_labels = 20
-batch_size = 1
+batch_size = 40
 base_learning_rate = 0.0004 * batch_size
 
 stepsize = int(10 * train_data_count / batch_size)
@@ -79,12 +79,15 @@ workspace.ResetWorkspace(root_folder)
 train_model = model_helper.ModelHelper(name = "train")
 
 # reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
-reader = [train_data_db, train_data_db_type]
-def AddInput_ops(model):
+# reader = [train_data_db, train_data_db_type]
+def CreateDBReader(reader_db_path, reader_db_type):
+	return [reader_db_path, reader_db_type]
+
+def AddInput_ops(model, db_reader):
     # load the dataset
     data, label = model.TensorProtosDBInput(
 		[], ["data", "label"], batch_size = batch_size,
-		db=reader[0], db_type=reader[1])
+		db=db_reader[0], db_type=db_reader[1])
     # data, label = brew.image_input(
     # 	model,
     # 	reader,
@@ -98,22 +101,22 @@ def AddInput_ops(model):
 
 def TestModel_ops(model, data, label):
     # Image size: 227 x 227 -> 224 x 224
-    conv1 = brew.conv(model, data, 'conv1', dim_in=3, dim_out=16, kernel=4)
+    conv1 = brew.conv(model, data, 'conv1', dim_in=3, dim_out=16, kernel=3, weight_init=("MSRAFill", {}))
     pool1 = brew.max_pool(model, conv1, 'pool1', kernel=2, stride=2)
     # Image size: 112 x 112 -> 110 x 110
-    conv2 = brew.conv(model, pool1, 'conv2', dim_in=16, dim_out=32, kernel=3)
-    pool2 = brew.max_pool(model, pool1, 'pool2', kernel=2, stride=2)
+    conv2 = brew.conv(model, pool1, 'conv2', dim_in=16, dim_out=32, kernel=3, weight_init=("MSRAFill", {}))
+    pool2 = brew.max_pool(model, conv2, 'pool2', kernel=2, stride=2)
 
     # Image size: 55 x 55 -> 52 x 52
-    conv3 = brew.conv(model, pool2, 'conv3', dim_in=32, dim_out=64, kernel=4)
+    conv3 = brew.conv(model, pool2, 'conv3', dim_in=32, dim_out=64, kernel=3, weight_init=("MSRAFill", {}))
     pool3 = brew.max_pool(model, conv3, 'pool3', kernel=2, stride=2)
 
     # Image size: 26 x 26 -> 24 x 24
-    conv4 = brew.conv(model, pool3, 'conv4', dim_in=64, dim_out=128, kernel=3)
+    conv4 = brew.conv(model, pool3, 'conv4', dim_in=64, dim_out=128, kernel=3, weight_init=("MSRAFill", {}))
     pool4 = brew.max_pool(model, conv4, 'pool4', kernel=2, stride=2)
 
     # Image size: 12 x 12 -> 10 x 10
-    conv5 = brew.conv(model, pool4, 'conv5', dim_in=128, dim_out=256, kernel=3)
+    conv5 = brew.conv(model, pool4, 'conv5', dim_in=128, dim_out=256, kernel=3, weight_init=("MSRAFill", {}))
 
     fc1 = brew.fc(model, conv5, 'fc1', dim_in=256 * 10 * 10, dim_out=4096)
     fc1 = brew.relu(model, fc1, fc1)
@@ -220,7 +223,8 @@ def OptimizeGradientMemory(model, loss):
 device_opt = core.DeviceOption(caffe2_pb2.CUDA, gpus[0])
 # with core.NameScope("imonaboat"):
 with core.DeviceScope(device_opt):
-	AddInput_ops(train_model)
+	reader = CreateDBReader(train_data_db, train_data_db_type)
+	AddInput_ops(train_model, reader)
 	losses = CreateTestModel_ops(train_model)
 	blobs_to_gradients = train_model.AddGradientOperators(losses)
 	AddParameterUpdate_ops(train_model)
@@ -230,7 +234,7 @@ workspace.RunNetOnce(train_model.param_init_net)
 workspace.CreateNet(train_model.net, overwrite = True)
 ############################################
 
-Num_Epochs = 100
+Num_Epochs = 20
 
 ############################################
 loss = []
@@ -252,11 +256,11 @@ for epoch in range(Num_Epochs):
             format(iter+1, num_iters, epoch+1, Num_Epochs, batch_size/dt
 		))
 
-pyplot.figure(1)
-pyplot.plot(loss, 'b')
-pyplot.plot(accuracy, 'r')
-pyplot.legend(('Loss', 'Accuracy'), loc='upper right')
-pyplot.show()
+# pyplot.figure(1)
+# pyplot.plot(loss, 'b')
+# pyplot.plot(accuracy, 'r')
+# pyplot.legend(('Loss', 'Accuracy'), loc='upper right')
+# pyplot.show()
 '''
 # def AddAccuracy(model, softmax, label):
 #     accuracy = brew.accuracy(model, [softmax, label], "accuracy")
