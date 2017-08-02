@@ -19,6 +19,8 @@
 # In[13]:
 
 # get_ipython().magic(u'matplotlib inline')
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot
 import numpy as np
 import os
@@ -47,6 +49,7 @@ root_folder = os.path.join(current_folder, 'test_files')
 train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
 train_data_db_type = "lmdb"
 train_data_count = 200
+test_data_count = 200
 
 
 test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
@@ -56,7 +59,7 @@ arg_scope = {"order": "NCHW"}
 
 gpus = [0]
 num_labels = 20
-batch_size = 40
+batch_size = 5
 base_learning_rate = 0.0004 * batch_size
 
 stepsize = int(10 * train_data_count / batch_size)
@@ -77,6 +80,7 @@ workspace.ResetWorkspace(root_folder)
 
 # In[15]:
 train_model = model_helper.ModelHelper(name = "train")
+test_model = model_helper.ModelHelper(name = "test")
 
 # reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
 # reader = [train_data_db, train_data_db_type]
@@ -116,11 +120,11 @@ def TestModel_ops(model, data, label):
     pool4 = brew.max_pool(model, conv4, 'pool4', kernel=2, stride=2)
 
     # Image size: 12 x 12 -> 10 x 10
-    conv5 = brew.conv(model, pool4, 'conv5', dim_in=128, dim_out=256, kernel=3, weight_init=("MSRAFill", {}))
+    conv5 = brew.conv(model, pool4, 'conv5', dim_in=128, dim_out=300, kernel=3, weight_init=("MSRAFill", {}))
 
-    fc1 = brew.fc(model, conv5, 'fc1', dim_in=256 * 10 * 10, dim_out=4096)
+    fc1 = brew.fc(model, conv5, 'fc1', dim_in=300 * 10 * 10, dim_out=5000)
     fc1 = brew.relu(model, fc1, fc1)
-    pred = brew.fc(model, fc1, 'pred', 4096, 20)
+    pred = brew.fc(model, fc1, 'pred', 5000, 20)
 
     softmax = brew.softmax(model, pred, 'softmax')
    
@@ -220,6 +224,12 @@ def OptimizeGradientMemory(model, loss):
 		share_activations = False,
 	)
 
+def ModelAccuracy(model):
+	accuracy = []
+	prefix = model.net.Proto().name
+	accuracy.append(np.asscalar(workspace.FetchBlob("{}_accuracy".format(prefix))))
+	return np.average(accuracy)
+
 device_opt = core.DeviceOption(caffe2_pb2.CUDA, gpus[0])
 # with core.NameScope("imonaboat"):
 with core.DeviceScope(device_opt):
@@ -232,35 +242,97 @@ OptimizeGradientMemory(train_model, [blobs_to_gradients[losses[0]]])
 
 workspace.RunNetOnce(train_model.param_init_net)
 workspace.CreateNet(train_model.net, overwrite = True)
+
+with core.DeviceScope(device_opt):
+	reader = CreateDBReader(test_data_db, test_data_db_type)
+	AddInput_ops(test_model, reader)
+	losses = CreateTestModel_ops(test_model)
+
+workspace.RunNetOnce(test_model.param_init_net)
+workspace.CreateNet(test_model.net, overwrite = True)
+
+graph = net_drawer.GetPydotGraphMinimal(
+	train_model.net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
+)
+graph.write_png(os.path.join(root_folder, "train_net.png"))
+
+graph = net_drawer.GetPydotGraphMinimal(
+	train_model.param_init_net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
+)
+graph.write_png(os.path.join(root_folder, "train_init_net.png"))
+
+graph = net_drawer.GetPydotGraphMinimal(
+	test_model.net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
+)
+graph.write_png(os.path.join(root_folder, "test_net.png"))
+
+graph = net_drawer.GetPydotGraphMinimal(
+	test_model.param_init_net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
+)
+graph.write_png(os.path.join(root_folder, "test_int_net.png"))
+
+with open(os.path.join(root_folder, "train_net.pbtxt"), 'w') as fo:
+	fo.write(str(train_model.net.Proto()))
+with open(os.path.join(root_folder, "train_init_net.pbtxt"), 'w') as fo:
+	fo.write(str(train_model.param_init_net.Proto()))
+with open(os.path.join(root_folder, "test_net.pbtxt"), 'w') as fo:
+	fo.write(str(test_model.net.Proto()))
+with open(os.path.join(root_folder, "test_init_net.pbtxt"), 'w') as fo:
+	fo.write(str(test_model.param_init_net.Proto()))
+
+
 ############################################
 
-Num_Epochs = 20
+Num_Epochs = 2
 
 ############################################
 loss = []
-accuracy = []
+train_accuracy = []
+test_accuracy = []
+
 for epoch in range(Num_Epochs):
 	num_iters = int(train_data_count / batch_size)
+	sub_loss = []
+	sub_train_accuracy = []
 	for iter in range(num_iters):
 		t1 = time.time()
 		workspace.RunNet(train_model.net.Proto().name)
 		t2 = time.time()
 		dt = t2 - t1
-		loss.append(workspace.FetchBlob("loss"))
-		accuracy.append(workspace.FetchBlob("train_accuracy"))
-
+		sub_loss.append(workspace.FetchBlob("loss"))
+		sub_train_accuracy.append(ModelAccuracy(train_model))
+		print("train_accurage: %f" % ModelAccuracy(train_model))
 		print((
 			"Finished iteration {:>" + str(len(str(num_iters))) + "}/{}" +
             " (epoch {:>" + str(len(str(Num_Epochs))) + "}/{})" + 
             " ({:.2f} images/sec)").
-            format(iter+1, num_iters, epoch+1, Num_Epochs, batch_size/dt
-		))
+            format(iter+1, num_iters, epoch+1, Num_Epochs, batch_size/dt)
+        	)
+	loss.append(np.average(sub_loss))
+	train_accuracy.append(np.average(sub_train_accuracy))
 
-# pyplot.figure(1)
-# pyplot.plot(loss, 'b')
-# pyplot.plot(accuracy, 'r')
-# pyplot.legend(('Loss', 'Accuracy'), loc='upper right')
-# pyplot.show()
+	sub_test_accuracy = []
+	for _ in range(int(test_data_count / batch_size)):
+		workspace.RunNet(test_model.net.Proto().name)
+		sub_test_accuracy.append(ModelAccuracy(test_model))
+		print("test_accurage: %f" % ModelAccuracy(test_model))
+	
+	test_accuracy.append(np.average(sub_test_accuracy))
+	print(
+		"Train accuracy: {:.3f}, Test accuracy: {:.3f}".
+		format(train_accuracy[epoch], test_accuracy[epoch])
+		)
+
+print(train_model.Proto())
+print(test_model.Proto())
+
+pyplot.figure()
+pyplot.plot(loss, 'b')
+pyplot.plot(train_accuracy, 'r')
+pyplot.plot(test_accuracy, 'g')
+pyplot.legend(('Loss', 'Accuracy'), loc='upper right')
+pyplot.show()
+pyplot.savefig(os.path.join(root_folder, "result.png"), dpi = 600)
 '''
 # def AddAccuracy(model, softmax, label):
 #     accuracy = brew.accuracy(model, [softmax, label], "accuracy")
