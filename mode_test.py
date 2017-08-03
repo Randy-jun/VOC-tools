@@ -1,22 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# coding: utf-8
-
-# In[12]:
-
-# EXPLAIN WHAT MNIST IS (GIVE EXAMPLE) (SHOW GRAPH STRUCTURE) (MORE VISUALS IN GENERAL)
-
-
-# # MNIST
-# 
-# In this tutorial, we will show you how to train an actual CNN model, albeit small. We will be using the old good MNIST dataset and the LeNet model, with a slight change that the sigmoid activations are replaced with ReLUs.
-# 
-# We will use the model helper - that helps us to deal with parameter initializations naturally.
-# 
-# First, let's import the necessities.
-
-# In[13]:
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 # get_ipython().magic(u'matplotlib inline')
 import matplotlib
@@ -26,6 +12,7 @@ import numpy as np
 import os
 import shutil
 import time
+import cv2
 # from IPython import display
 
 from caffe2.python import core, model_helper, net_drawer, workspace, visualize, brew, memonger
@@ -46,13 +33,15 @@ current_folder = os.path.join(os.path.expanduser("~"), "data/VOCdevkit/dataDB")
 data_folder = os.path.join(current_folder)
 root_folder = os.path.join(current_folder, 'test_files')
 
-train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
+# train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
+train_data_db = os.path.join(data_folder, "trainvlaDB_lmdb")
 train_data_db_type = "lmdb"
-train_data_count = 200
-test_data_count = 200
+train_data_count = 500#00
+test_data_count = 200#00
 
 
-test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
+# test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
+test_data_db = os.path.join(data_folder, "testDB_sub_lmdb")
 test_data_db_type = "lmdb"
 
 arg_scope = {"order": "NCHW"}
@@ -101,6 +90,7 @@ def AddInput_ops(model, db_reader):
     # 	scale = 227,
     # 	crop = 227,
     # )
+    label = model.StopGradient(label, label)
     data = model.StopGradient(data, data)
 
 def TestModel_ops(model, data, label):
@@ -220,7 +210,7 @@ def OptimizeGradientMemory(model, loss):
 		model.net,
 		loss,
 		set(model.param_to_grad.values()),
-		namescope = "imonaboat",
+		namescope = "test",
 		share_activations = False,
 	)
 
@@ -250,25 +240,21 @@ with core.DeviceScope(device_opt):
 
 workspace.RunNetOnce(test_model.param_init_net)
 workspace.CreateNet(test_model.net, overwrite = True)
-
-graph = net_drawer.GetPydotGraphMinimal(
-	train_model.net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
-)
+'''
+graph = net_drawer.GetPydotGraph(
+	train_model.net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "train_net.png"))
 
-graph = net_drawer.GetPydotGraphMinimal(
-	train_model.param_init_net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
-)
+graph = net_drawer.GetPydotGraph(
+	train_model.param_init_net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "train_init_net.png"))
 
-graph = net_drawer.GetPydotGraphMinimal(
-	test_model.net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
-)
+graph = net_drawer.GetPydotGraph(
+	test_model.net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "test_net.png"))
 
-graph = net_drawer.GetPydotGraphMinimal(
-	test_model.param_init_net.Proto().op, "test", rankdir = "LR", minimal_dependency = True
-)
+graph = net_drawer.GetPydotGraph(
+	test_model.param_init_net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "test_int_net.png"))
 
 with open(os.path.join(root_folder, "train_net.pbtxt"), 'w') as fo:
@@ -279,11 +265,12 @@ with open(os.path.join(root_folder, "test_net.pbtxt"), 'w') as fo:
 	fo.write(str(test_model.net.Proto()))
 with open(os.path.join(root_folder, "test_init_net.pbtxt"), 'w') as fo:
 	fo.write(str(test_model.param_init_net.Proto()))
+'''
 
 
 ############################################
 
-Num_Epochs = 2
+Num_Epochs = 20
 
 ############################################
 loss = []
@@ -298,6 +285,14 @@ for epoch in range(Num_Epochs):
 		t1 = time.time()
 		workspace.RunNet(train_model.net.Proto().name)
 		t2 = time.time()
+		# img_datas = workspace.FetchBlob("data")
+		# for k in xrange(0, batch_size):
+		# 	img = img_datas[k]
+		# 	img = img.swapaxes(0, 1).swapaxes(1, 2)
+		# 	cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
+		# 	cv2.imshow('img', img)
+		# 	cv2.waitKey(0)
+		# 	cv2.destroyAllWindows()
 		dt = t2 - t1
 		sub_loss.append(workspace.FetchBlob("loss"))
 		sub_train_accuracy.append(ModelAccuracy(train_model))
@@ -314,6 +309,14 @@ for epoch in range(Num_Epochs):
 	sub_test_accuracy = []
 	for _ in range(int(test_data_count / batch_size)):
 		workspace.RunNet(test_model.net.Proto().name)
+		# img_datas = workspace.FetchBlob("data")
+		# for k in xrange(0, batch_size):
+		# 	img = img_datas[k]
+		# 	img = img.swapaxes(0, 1).swapaxes(1, 2)
+		# 	cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
+		# 	cv2.imshow('img', img)
+		# 	cv2.waitKey(0)
+		# 	cv2.destroyAllWindows()
 		sub_test_accuracy.append(ModelAccuracy(test_model))
 		print("test_accurage: %f" % ModelAccuracy(test_model))
 	
@@ -323,8 +326,8 @@ for epoch in range(Num_Epochs):
 		format(train_accuracy[epoch], test_accuracy[epoch])
 		)
 
-print(train_model.Proto())
-print(test_model.Proto())
+# print(train_model.Proto())
+# print(test_model.Proto())
 
 pyplot.figure()
 pyplot.plot(loss, 'b')
@@ -405,7 +408,7 @@ AddLeNetModel(deploy_model, "data")
 
 # In[20]:
 
-# graph = net_drawer.GetPydotGraphMinimal(
+# graph = net_drawer.GetPydotGraph(
     # train_model.net.Proto().op, "mnist", rankdir="LR", minimal_dependency=True)
 # display.Image(graph.create_png(), width=800)
 
