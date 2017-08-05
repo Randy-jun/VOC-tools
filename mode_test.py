@@ -36,8 +36,8 @@ root_folder = os.path.join(current_folder, 'test_files')
 # train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
 train_data_db = os.path.join(data_folder, "trainvlaDB_lmdb")
 train_data_db_type = "lmdb"
-train_data_count = 500#00
-test_data_count = 200#00
+train_data_count = 1000#00
+test_data_count = 500#00
 
 
 # test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
@@ -48,7 +48,7 @@ arg_scope = {"order": "NCHW"}
 
 gpus = [0]
 num_labels = 20
-batch_size = 5
+batch_size = 4
 base_learning_rate = 0.0004 * batch_size
 
 stepsize = int(10 * train_data_count / batch_size)
@@ -270,7 +270,7 @@ with open(os.path.join(root_folder, "test_init_net.pbtxt"), 'w') as fo:
 
 ############################################
 
-Num_Epochs = 20
+Num_Epochs = 50
 
 ############################################
 loss = []
@@ -285,15 +285,13 @@ for epoch in range(Num_Epochs):
 		t1 = time.time()
 		workspace.RunNet(train_model.net.Proto().name)
 		t2 = time.time()
-		# img_datas = workspace.FetchBlob("data")
-		# for k in xrange(0, batch_size):
-		# 	img = img_datas[k]
-		# 	img = img.swapaxes(0, 1).swapaxes(1, 2)
-		# 	cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
-		# 	cv2.imshow('img', img)
-		# 	cv2.waitKey(0)
-		# 	cv2.destroyAllWindows()
 		dt = t2 - t1
+		# print("####train#####")
+		# print(workspace.FetchBlob("conv2_w"))
+		# print("=========")
+		# print("####train#####")
+		# print(workspace.FetchBlob("conv2_b"))
+		# print("=========")
 		sub_loss.append(workspace.FetchBlob("loss"))
 		sub_train_accuracy.append(ModelAccuracy(train_model))
 		print("train_accurage: %f" % ModelAccuracy(train_model))
@@ -306,9 +304,18 @@ for epoch in range(Num_Epochs):
 	loss.append(np.average(sub_loss))
 	train_accuracy.append(np.average(sub_train_accuracy))
 
+	workspace.FetchBlob("conv2_w")
+	workspace.FetchBlob("conv2_b")
+
 	sub_test_accuracy = []
 	for _ in range(int(test_data_count / batch_size)):
 		workspace.RunNet(test_model.net.Proto().name)
+		# print("####test#####")
+		# print(workspace.FetchBlob("conv2_w"))
+		# print("=========")
+		# print("####test#####")
+		# print(workspace.FetchBlob("conv2_b"))
+		# print("=========")
 		# img_datas = workspace.FetchBlob("data")
 		# for k in xrange(0, batch_size):
 		# 	img = img_datas[k]
@@ -333,7 +340,7 @@ pyplot.figure()
 pyplot.plot(loss, 'b')
 pyplot.plot(train_accuracy, 'r')
 pyplot.plot(test_accuracy, 'g')
-pyplot.legend(('Loss', 'Accuracy'), loc='upper right')
+pyplot.legend(('Loss', 'Train_Accuracy', 'Test_Accuracy'), loc='upper right')
 pyplot.show()
 pyplot.savefig(os.path.join(root_folder, "result.png"), dpi = 600)
 '''
