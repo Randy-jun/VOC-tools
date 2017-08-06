@@ -27,56 +27,90 @@ def display(env):
 	for k, v in cur:
 		print(k, len(v))
 
-def read_data_db(dbpath):
+def read_data_db(dbpath, cla):
+	count = []
+	db_env = lmdb.open(dbpath)#, map_size=int(1024*1024*1024*30)) # size:30GB
+	with db_env.begin() as txn:
+		cur = txn.cursor()
+		for k, v in cur: 
+			count.append(k)
+
+	print(count[:3])
+	print(len(count))
+	name = cla + "_count.npy"
+	np.save(name, count)
+
+
 	# db_env = lmdb.open(dbpath)#, map_size=int(1024*1024*1024*30)) # size:30GB
 	# print(dir(db_env.info()))
 	# with db_env.begin(write=True) as txn:
 	# txn = db_env.begin()
 	# display(db_env)
 	# exit()
-	model = model_helper.ModelHelper(name="lmdbtest")
+	#============================
+	# model = model_helper.ModelHelper(name="lmdbtest")
+	# 	# data, label = model.TensorProtosDBInput(
+	# 	# 	[], ["data", "label"], batch_size = batch_size,
+	# 	# 	db=dbpath, db_type="lmdb")
 	# data, label = model.TensorProtosDBInput(
 	# 	[], ["data", "label"], batch_size = batch_size,
 	# 	db=dbpath, db_type="lmdb")
-	data, label = model.TensorProtosDBInput(
-		[], ["data", "label"], batch_size = batch_size,
-		db=dbpath, db_type="lmdb")
-	workspace.RunNetOnce(model.param_init_net)
-	workspace.CreateNet(model.net)
-	for _ in range(0, 1):
-		workspace.RunNet(model.net.Proto().name)
-		img_datas = workspace.FetchBlob("data")
-		print(data.shape)
-		labels = workspace.FetchBlob("label")
+	# workspace.RunNetOnce(model.param_init_net)
+	# workspace.CreateNet(model.net)
+	# for _ in range(0, 1):
+	# 	workspace.RunNet(model.net.Proto().name)
+	# 	img_datas = workspace.FetchBlob("data")
+	# 	print(data.shape)
+	# 	labels = workspace.FetchBlob("label")
 
-		for k in xrange(0, batch_size):
-			img = img_datas[k]
-			img = img.swapaxes(0, 1).swapaxes(1, 2)
-			cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
-			cv2.imshow('img', img)
-			cv2.waitKey(0)
-			cv2.destroyAllWindows()
+	# 	for k in xrange(0, batch_size):
+	# 		img = img_datas[k]
+	# 		img = img.swapaxes(0, 1).swapaxes(1, 2)
+	# 		cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
+	# 		cv2.imshow('img', img)
+	# 		cv2.waitKey(0)
+	# 		cv2.destroyAllWindows()
 
 def main():
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_sub_lmdb")
-	read_data_db(db_path)
+	read_data_db(db_path, "sub")
+	print("***********")
+	res1 = np.load("sub_count.npy")
+	print(res1[:3])
+	print(len(res1))
 	print(db_path + "is OK!")
+	# 12032
 
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_top_bottom_lmdb")
-	read_data_db(db_path)
+	read_data_db(db_path, "top")
+	print("***********")
+	res2 = np.load("top_count.npy")
+	print(res2[:3])
+	print(len(res2))
 	print(db_path + " is OK!")
+	#24064
 
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_left_right_lmdb")
-	read_data_db(db_path)
+	read_data_db(db_path, "left")
+	print("***********")
+	res3 = np.load("left_count.npy")
+	print(res3[:3])
+	print(len(res3))
 	print(db_path + "is OK!")
+	#24064
 
 	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
 	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_quarter_lmdb")
-	read_data_db(db_path)
+	read_data_db(db_path, "qua")
+	print("***********")
+	res4 = np.load("qua_count.npy")
+	print(res4[:3])
+	print(len(res4))
 	print(db_path + "is OK!")
+	#48128
 
 
 if __name__ == '__main__':
