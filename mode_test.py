@@ -35,8 +35,8 @@ root_folder = os.path.join(current_folder, 'test_files')
 # train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
 train_data_db = os.path.join(data_folder, "trainvlaDB_lmdb")
 train_data_db_type = "lmdb"
-train_data_count = 50728#50728
-test_data_count = 12032#12032
+train_data_count = 500#50728
+test_data_count = 100#12032
 
 
 # test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
@@ -51,7 +51,7 @@ batch_size = 23
 base_learning_rate = 0.0004 * batch_size
 
 stepsize = int(10 * train_data_count / batch_size)
-weight_decay = 1e-4
+weight_decay = 1e-2
 
 if not os.path.exists(data_folder):
     print("No %s exists." % data_folder)
