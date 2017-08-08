@@ -35,8 +35,8 @@ root_folder = os.path.join(current_folder, 'test_files')
 # train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
 train_data_db = os.path.join(data_folder, "trainvlaDB_lmdb")
 train_data_db_type = "lmdb"
-train_data_count = 500#50728
-test_data_count = 100#12032
+train_data_count = 2000#50728
+test_data_count = 1000#12032
 
 
 # test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
@@ -47,11 +47,11 @@ arg_scope = {"order": "NCHW"}
 
 gpus = [0]
 num_labels = 20
-batch_size = 23
+batch_size = 20
 base_learning_rate = 0.0004 * batch_size
 
-stepsize = int(10 * train_data_count / batch_size)
-weight_decay = 1e-2
+stepsize = int(20 * train_data_count / batch_size)
+weight_decay = 1e-3
 
 if not os.path.exists(data_folder):
     print("No %s exists." % data_folder)
@@ -73,22 +73,22 @@ test_model = model_helper.ModelHelper(name = "test")
 # reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
 # reader = [train_data_db, train_data_db_type]
 def CreateDBReader(reader_db_path, reader_db_type):
-	return [reader_db_path, reader_db_type]
+    return [reader_db_path, reader_db_type]
 
 def AddInput_ops(model, db_reader):
     # load the dataset
     data, label = model.TensorProtosDBInput(
-		[], ["data", "label"], batch_size = batch_size,
-		db=db_reader[0], db_type=db_reader[1])
+        [], ["data", "label"], batch_size = batch_size,
+        db=db_reader[0], db_type=db_reader[1])
  
     # data, label = brew.image_input(
-    # 	model,
-    # 	reader,
-    # 	["data", "label"],
-    # 	order = "NCHW",
-    # 	batch_size = batch_size,
-    # 	scale = 227,
-    # 	crop = 227,
+    #     model,
+    #     reader,
+    #     ["data", "label"],
+    #     order = "NCHW",
+    #     batch_size = batch_size,
+    #     scale = 227,
+    #     crop = 227,
     # )
     label = model.StopGradient(label, label)
     data = model.StopGradient(data, data)
@@ -122,7 +122,7 @@ def AddInput_ops(model, db_reader):
 #     # compute the expected loss
 #     loss = model.AveragedLoss(xent, "loss")
 #     return [softmax, loss]
-
+# ====================== MobileNet ====================
 def TestModel_ops(model, data, label):
     # Image size: 227 x 227 -> 224 x 224
     conv1_s2 = brew.conv(model, data, 'conv1_s2', dim_in=3, dim_out=32, kernel=4, stride=2)
@@ -174,169 +174,232 @@ def TestModel_ops(model, data, label):
     # compute the expected loss
     loss = model.AveragedLoss(xent, "loss")
     return [softmax, loss]
+#====================== MobileNet ====================
+
+#====================== VGG16 ====================
+# def TestModel_ops(model, data, label):
+#     # Image size: 227 x 227 -> 224 x 224
+#     conv1_s2 = brew.conv(model, data, 'conv1_s2', dim_in=3, dim_out=32, kernel=4, stride=2)
+#     conv1_dw = brew.conv(model, conv1_s2, 'conv1_dw', dim_in=32, dim_out=32, kernel=3, pad=2)
+#     conv1_s1 = brew.conv(model, conv1_dw, 'conv1_s1', dim_in=32, dim_out=64, kernel=1)
+
+#     conv2_s2 = brew.conv(model, conv1_s1, 'conv2_s2', dim_in=64, dim_out=64, kernel=3, pad=2, stride=2)
+#     conv2_dw = brew.conv(model, conv2_s2, 'conv2_dw', dim_in=64, dim_out=128, kernel=1)
+#     conv2_k3 = brew.conv(model, conv2_dw, 'conv2_k3', dim_in=128, dim_out=128, kernel=3, pad=2)
+#     conv2_s1 = brew.conv(model, conv2_k3, 'conv2_s1', dim_in=128, dim_out=128, kernel=1)
+
+#     conv3_s2 = brew.conv(model, conv2_s1, 'conv3_s2', dim_in=128, dim_out=128, kernel=3, pad=2, stride=2)
+#     conv3_dw = brew.conv(model, conv3_s2, 'conv3_dw', dim_in=128, dim_out=256, kernel=1)
+#     conv3_k3 = brew.conv(model, conv3_dw, 'conv3_k3', dim_in=256, dim_out=256, kernel=3, pad=2)
+#     conv3_s1 = brew.conv(model, conv3_k3, 'conv3_s1', dim_in=256, dim_out=256, kernel=1)
+
+#     conv4_s2 = brew.conv(model, conv3_s1, 'conv4_s2', dim_in=256, dim_out=256, kernel=3, pad=2, stride=2)
+#     conv4_dw = brew.conv(model, conv4_s2, 'conv4_dw', dim_in=256, dim_out=512, kernel=1)
+#     #5
+#     conv5_s2 = brew.conv(model, conv4_dw, 'conv5_s2', dim_in=512, dim_out=512, kernel=3, pad=2)
+#     conv5_dw = brew.conv(model, conv5_s2, 'conv5_dw', dim_in=512, dim_out=512, kernel=1)
+#     #4
+#     conv6_s2 = brew.conv(model, conv5_dw, 'conv6_s2', dim_in=512, dim_out=512, kernel=3, pad=2)
+#     conv6_dw = brew.conv(model, conv6_s2, 'conv6_dw', dim_in=512, dim_out=512, kernel=1)
+#     #3
+#     conv7_s2 = brew.conv(model, conv6_dw, 'conv7_s2', dim_in=512, dim_out=512, kernel=3, pad=2)
+#     conv7_dw = brew.conv(model, conv7_s2, 'conv7_dw', dim_in=512, dim_out=512, kernel=1)
+#     #2
+#     conv8_s2 = brew.conv(model, conv7_dw, 'conv8_s2', dim_in=512, dim_out=512, kernel=3, pad=2)
+#     conv8_dw = brew.conv(model, conv8_s2, 'conv8_dw', dim_in=512, dim_out=512, kernel=1)
+#     #1
+#     conv9_s2 = brew.conv(model, conv8_dw, 'conv9_s2', dim_in=512, dim_out=512, kernel=3, pad=2)
+#     conv9_dw = brew.conv(model, conv9_s2, 'conv9_dw', dim_in=512, dim_out=512, kernel=1)
+
+#     conv10_s2 = brew.conv(model, conv9_dw, 'conv10_s2', dim_in=512, dim_out=512, kernel=3, pad=2, stride=2)
+#     conv10_dw = brew.conv(model, conv10_s2, 'conv10_dw', dim_in=512, dim_out=1024, kernel=1)
+#     conv10_k3 = brew.conv(model, conv10_dw, 'conv10_k3', dim_in=1024, dim_out=1024, kernel=3)
+#     conv10_s1 = brew.conv(model, conv10_k3, 'conv10_s1', dim_in=1024, dim_out=1024, kernel=1)
+
+#     pool1 = brew.average_pool(model, conv10_s1, 'pool1', kernel=7, stride=7)
+#     # pool1 = brew.max_pool(model, conv10_s1, 'pool1', kernel=7, stride=7)
+
+#     fc1 = brew.fc(model, pool1, 'fc1', dim_in=1 * 1 * 1024, dim_out=20)
+#     fc1 = brew.relu(model, fc1, fc1)
+
+#     softmax = brew.softmax(model, fc1, 'softmax')
+   
+#     xent = model.LabelCrossEntropy([softmax, label], 'xent')
+#     # compute the expected loss
+#     loss = model.AveragedLoss(xent, "loss")
+#     return [softmax, loss]
+# #====================== VGG16 ====================
+
 
 def CreateTestModel_ops(model, loss_scale = 1.0):
-	[softmax, loss] = TestModel_ops(model, "data", "label")
-	# [softmax, loss] = resnet.create_resnet50(model, "data", num_input_channels = 3, num_labels = num_labels, label = "label",)
-	prefix = model.net.Proto().name
-	# print(dir(model.net.Proto().ListFields()))
-	loss = model.net.Scale(loss, prefix + "_loos", scale = loss_scale)
-	brew.accuracy(model, [softmax, "label"], prefix + "_accuracy")
+    [softmax, loss] = TestModel_ops(model, "data", "label")
+    # [softmax, loss] = resnet.create_resnet50(model, "data", num_input_channels = 3, num_labels = num_labels, label = "label",)
+    prefix = model.net.Proto().name
+    # print(dir(model.net.Proto().ListFields()))
+    loss = model.net.Scale(loss, prefix + "_loos", scale = loss_scale)
+    brew.accuracy(model, [softmax, "label"], prefix + "_accuracy")
 
-	return [loss]
+    return [loss]
 
 
 def AddParameterUpdate_ops(model):
-	brew.add_weight_decay(model, weight_decay)
-	iter = brew.iter(model, "iter")
-	lr = model.net.LearningRate(
-		[iter],
-		"lr",
-		base_lr = base_learning_rate,
-		policy = "step",
-		stepsize = stepsize,
-		gamma = 0.1,
-	)
-	for param in model.GetParams():
-		param_grad = model.param_to_grad[param]
-		param_momentum = model.param_init_net.ConstantFill(
-			[param], param + "_momentum", value=0.0
-		)
+    brew.add_weight_decay(model, weight_decay)
+    iter = brew.iter(model, "iter")
+    lr = model.net.LearningRate(
+        [iter],
+        "lr",
+        base_lr = base_learning_rate,
+        policy = "step",
+        stepsize = stepsize,
+        gamma = 0.1,
+    )
+    for param in model.GetParams():
+        param_grad = model.param_to_grad[param]
+        param_momentum = model.param_init_net.ConstantFill(
+            [param], param + "_momentum", value=0.0
+        )
 
-		model.net.MomentumSGDUpdate(
-			[param_grad, param_momentum, lr, param],
-			[param_grad, param_momentum, param],
-			momentum = 0.9,
-			nesterov=1,
-		)
+        model.net.MomentumSGDUpdate(
+            [param_grad, param_momentum, lr, param],
+            [param_grad, param_momentum, param],
+            momentum = 0.9,
+            nesterov=1,
+        )
 
 def OptimizeGradientMemory(model, loss):
-	model.net._net = memonger.share_grad_blobs(
-		model.net,
-		loss,
-		set(model.param_to_grad.values()),
-		namescope = "test",
-		share_activations = False,
-	)
+    model.net._net = memonger.share_grad_blobs(
+        model.net,
+        loss,
+        set(model.param_to_grad.values()),
+        namescope = "test",
+        share_activations = False,
+    )
 
 def ModelAccuracy(model):
-	accuracy = []
-	prefix = model.net.Proto().name
-	accuracy.append(np.asscalar(workspace.FetchBlob("{}_accuracy".format(prefix))))
-	return np.average(accuracy)
+    accuracy = []
+    prefix = model.net.Proto().name
+    accuracy.append(np.asscalar(workspace.FetchBlob("{}_accuracy".format(prefix))))
+    return np.average(accuracy)
 
 device_opt = core.DeviceOption(caffe2_pb2.CUDA, gpus[0])
 # with core.NameScope("imonaboat"):
 with core.DeviceScope(device_opt):
-	reader = CreateDBReader(train_data_db, train_data_db_type)
-	AddInput_ops(train_model, reader)
-	losses = CreateTestModel_ops(train_model)
-	blobs_to_gradients = train_model.AddGradientOperators(losses)
-	AddParameterUpdate_ops(train_model)
+    reader = CreateDBReader(train_data_db, train_data_db_type)
+    AddInput_ops(train_model, reader)
+    losses = CreateTestModel_ops(train_model)
+    blobs_to_gradients = train_model.AddGradientOperators(losses)
+    AddParameterUpdate_ops(train_model)
 OptimizeGradientMemory(train_model, [blobs_to_gradients[losses[0]]])
 
 workspace.RunNetOnce(train_model.param_init_net)
 workspace.CreateNet(train_model.net, overwrite = True)
 
 with core.DeviceScope(device_opt):
-	reader = CreateDBReader(test_data_db, test_data_db_type)
-	AddInput_ops(test_model, reader)
-	losses = CreateTestModel_ops(test_model)
+    reader = CreateDBReader(test_data_db, test_data_db_type)
+    AddInput_ops(test_model, reader)
+    losses = CreateTestModel_ops(test_model)
 
 workspace.RunNetOnce(test_model.param_init_net)
 workspace.CreateNet(test_model.net, overwrite = True)
 '''
 graph = net_drawer.GetPydotGraph(
-	train_model.net.Proto().op, "test", rankdir = "LR")
+    train_model.net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "train_net.png"))
 
 graph = net_drawer.GetPydotGraph(
-	train_model.param_init_net.Proto().op, "test", rankdir = "LR")
+    train_model.param_init_net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "train_init_net.png"))
 
 graph = net_drawer.GetPydotGraph(
-	test_model.net.Proto().op, "test", rankdir = "LR")
+    test_model.net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "test_net.png"))
 
 graph = net_drawer.GetPydotGraph(
-	test_model.param_init_net.Proto().op, "test", rankdir = "LR")
+    test_model.param_init_net.Proto().op, "test", rankdir = "LR")
 graph.write_png(os.path.join(root_folder, "test_int_net.png"))
 
 with open(os.path.join(root_folder, "train_net.pbtxt"), 'w') as fo:
-	fo.write(str(train_model.net.Proto()))
+    fo.write(str(train_model.net.Proto()))
 with open(os.path.join(root_folder, "train_init_net.pbtxt"), 'w') as fo:
-	fo.write(str(train_model.param_init_net.Proto()))
+    fo.write(str(train_model.param_init_net.Proto()))
 with open(os.path.join(root_folder, "test_net.pbtxt"), 'w') as fo:
-	fo.write(str(test_model.net.Proto()))
+    fo.write(str(test_model.net.Proto()))
 with open(os.path.join(root_folder, "test_init_net.pbtxt"), 'w') as fo:
-	fo.write(str(test_model.param_init_net.Proto()))
+    fo.write(str(test_model.param_init_net.Proto()))
 '''
 
 
 ############################################
 
-Num_Epochs = 20
+Num_Epochs = 50
 
 ############################################
-s_t = time.time()
+
 loss = []
 train_accuracy = []
 test_accuracy = []
 
 for epoch in range(Num_Epochs):
-	num_iters = int(train_data_count / batch_size)
-	sub_loss = []
-	sub_train_accuracy = []
-	for iter in range(num_iters):
-		t1 = time.time()
-		workspace.RunNet(train_model.net.Proto().name)
-		t2 = time.time()
-		dt = t2 - t1
-		# print("####train#####")
-		# print(workspace.FetchBlob("conv2_w"))
-		# print("=========")
-		# print("####train#####")
-		# print(workspace.FetchBlob("conv2_b"))
-		# print("=========")
-		sub_loss.append(workspace.FetchBlob("loss"))
-		sub_train_accuracy.append(ModelAccuracy(train_model))
-		print("train_accuracy: %f" % ModelAccuracy(train_model))
-		print((
-			"Finished iteration {:>" + str(len(str(num_iters))) + "}/{}" +
-            " (epoch {:>" + str(len(str(Num_Epochs))) + "}/{})" + 
-            " ({:.2f} images/sec)").
-            format(iter+1, num_iters, epoch+1, Num_Epochs, batch_size/dt)
-        	)
-	loss.append(np.average(sub_loss))
-	train_accuracy.append(np.average(sub_train_accuracy))
+    num_iters = int(train_data_count / batch_size)
+    sub_loss = []
+    sub_train_accuracy = []
+    s_t = time.time()
+    for iter in range(num_iters):
+        t1 = time.time()
+        workspace.RunNet(train_model.net.Proto().name)
+        t2 = time.time()
+        dt = t2 - t1
+        # print("####train#####")
+        # print(workspace.FetchBlob("conv2_w"))
+        # print("=========")
+        # print("####train#####")
+        # print(workspace.FetchBlob("conv2_b"))
+        # print("=========")
+        sub_loss.append(workspace.FetchBlob("loss"))
+        sub_train_accuracy.append(ModelAccuracy(train_model))
+        # print("train_accuracy: %f" % ModelAccuracy(train_model))
+        # print((
+        #     "Finished iteration {:>" + str(len(str(num_iters))) + "}/{}" +
+  #           " (epoch {:>" + str(len(str(Num_Epochs))) + "}/{})" + 
+  #           " ({:.2f} images/sec)").
+  #           format(iter+1, num_iters, epoch+1, Num_Epochs, batch_size/dt)
+  #           )
+    loss.append(np.average(sub_loss))
+    train_accuracy.append(np.average(sub_train_accuracy))
 
-	sub_test_accuracy = []
-	for _ in range(int(test_data_count / batch_size)):
-		workspace.RunNet(test_model.net.Proto().name)
-		# print("####test#####")
-		# print(workspace.FetchBlob("conv2_w"))
-		# print("=========")
-		# print("####test#####")
-		# print(workspace.FetchBlob("conv2_b"))
-		# print("=========")
-		# img_datas = workspace.FetchBlob("data")
-		# for k in xrange(0, batch_size):
-		# 	img = img_datas[k]
-		# 	img = img.swapaxes(0, 1).swapaxes(1, 2)
-		# 	cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
-		# 	cv2.imshow('img', img)
-		# 	cv2.waitKey(0)
-		# 	cv2.destroyAllWindows()
-		sub_test_accuracy.append(ModelAccuracy(test_model))
-		print("test_accuracy: %f" % ModelAccuracy(test_model))
-	
-	test_accuracy.append(np.average(sub_test_accuracy))
-	print(
-		"Train accuracy: {:.3f}, Test accuracy: {:.3f}".
-		format(train_accuracy[epoch], test_accuracy[epoch])
-		)
-e_t = time.time()
-print(e_t - s_t)
+    #============== Break Flag===============
+    flag = np.load("flag.npy")
+    if np.load("flag.npy"):
+        break;
+    #============== Break Flag===============
+
+    sub_test_accuracy = []
+    for _ in range(int(test_data_count / batch_size)):
+        workspace.RunNet(test_model.net.Proto().name)
+        # print("####test#####")
+        # print(workspace.FetchBlob("conv2_w"))
+        # print("=========")
+        # print("####test#####")
+        # print(workspace.FetchBlob("conv2_b"))
+        # print("=========")
+        # img_datas = workspace.FetchBlob("data")
+        # for k in xrange(0, batch_size):
+        #     img = img_datas[k]
+        #     img = img.swapaxes(0, 1).swapaxes(1, 2)
+        #     cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
+        #     cv2.imshow('img', img)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
+        sub_test_accuracy.append(ModelAccuracy(test_model))
+        # print("test_accuracy: %f" % ModelAccuracy(test_model))
+    
+    test_accuracy.append(np.average(sub_test_accuracy))
+    print(
+        "Train accuracy: {:.3f}, Test accuracy: {:.3f}".
+        format(train_accuracy[epoch], test_accuracy[epoch])
+        )
+    e_t = time.time()
+    print(e_t - s_t)
 # print(train_model.Proto())
 # print(test_model.Proto())
 
@@ -346,7 +409,7 @@ pyplot.plot(loss, 'b')
 pyplot.plot(train_accuracy, 'r')
 pyplot.plot(test_accuracy, 'g')
 pyplot.legend(('Loss', 'Train_Accuracy', 'Test_Accuracy'), loc='upper right')
-pyplot.show()
+# pyplot.show()
 pyplot.savefig(os.path.join(root_folder, "result.png"), dpi = 600)
 '''
 # def AddAccuracy(model, softmax, label):
@@ -447,7 +510,7 @@ workspace.RunNetOnce(train_model.param_init_net)
 # creating the network
 workspace.CreateNet(train_model.net)
 # set the number of iterations and track the accuracy & loss
-total_iters = 200	
+total_iters = 200    
 accuracy = np.zeros(total_iters)
 loss = np.zeros(total_iters)
 # Now, we will manually run the network for 200 iterations. 
