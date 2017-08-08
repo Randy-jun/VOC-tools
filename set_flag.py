@@ -3,6 +3,14 @@
 
 import numpy as np
 from sys import argv
+def test():
+	for x in xrange(1,100):
+		print(x)
+		if np.load("flag.npy"):
+			break
+
+	print("test")
+		
 
 def main():
 	flag = False
@@ -14,6 +22,9 @@ def main():
 		print("Argv must be 1 OR 0.")
 
 	np.save("flag.npy", flag)
+
+	# test()
+
 	loa = np.load("flag.npy")
 
 	print("Flag has been set %d" % loa)
