@@ -35,8 +35,8 @@ root_folder = os.path.join(current_folder, 'test_files')
 # train_data_db = os.path.join(data_folder, "trainvlaDB_t200_lmdb")
 train_data_db = os.path.join(data_folder, "trainvlaDB_lmdb")
 train_data_db_type = "lmdb"
-train_data_count = 2000#50728
-test_data_count = 1000#12032
+train_data_count = 50728#1000#50728
+test_data_count = 12032#200#12032
 
 
 # test_data_db = os.path.join(data_folder, "testDB_200_sub_lmdb")
@@ -47,11 +47,11 @@ arg_scope = {"order": "NCHW"}
 
 gpus = [0]
 num_labels = 20
-batch_size = 20
-base_learning_rate = 0.0004 * batch_size
+batch_size = 22
+base_learning_rate = 0.0001 * batch_size
 
-stepsize = int(20 * train_data_count / batch_size)
-weight_decay = 1e-3
+stepsize = int(50 * train_data_count / batch_size)
+weight_decay = 1e-4
 
 if not os.path.exists(data_folder):
     print("No %s exists." % data_folder)
@@ -69,6 +69,11 @@ workspace.ResetWorkspace(root_folder)
 # In[15]:
 train_model = model_helper.ModelHelper(name = "train")
 test_model = model_helper.ModelHelper(name = "test")
+
+#=========== Set Flag: Flase ============
+flag = False
+np.save("flag.npy", flag)
+#=========== Set Flag: Flase ============
 
 # reader = train_model.CreateDB("train_reader", db = train_data_db, db_type = train_data_db_type,)
 # reader = [train_data_db, train_data_db_type]
@@ -331,7 +336,7 @@ with open(os.path.join(root_folder, "test_init_net.pbtxt"), 'w') as fo:
 
 ############################################
 
-Num_Epochs = 50
+Num_Epochs = 200
 
 ############################################
 
@@ -367,11 +372,6 @@ for epoch in range(Num_Epochs):
     loss.append(np.average(sub_loss))
     train_accuracy.append(np.average(sub_train_accuracy))
 
-    #============== Break Flag===============
-    flag = np.load("flag.npy")
-    if np.load("flag.npy"):
-        break;
-    #============== Break Flag===============
 
     sub_test_accuracy = []
     for _ in range(int(test_data_count / batch_size)):
@@ -400,17 +400,34 @@ for epoch in range(Num_Epochs):
         )
     e_t = time.time()
     print(e_t - s_t)
+
+    #============== Record Data===============
+    np.savez("result.npz", train = test_accuracy, test = test_accuracy, loss = loss)
+    pyplot.figure()
+    pyplot.plot(loss, 'b')
+    pyplot.plot(train_accuracy, 'r')
+    pyplot.plot(test_accuracy, 'g')
+    pyplot.legend(('Loss', 'Train_Accuracy', 'Test_Accuracy'), loc='upper right')
+    pyplot.savefig(os.path.join(root_folder, "result.png"), dpi = 600)
+    #============== Record Data===============
+
+    #============== Break Flag===============
+    flag = np.load("flag.npy")
+    if np.load("flag.npy"):
+        break;
+    #============== Break Flag===============
+
 # print(train_model.Proto())
 # print(test_model.Proto())
 
-np.savez("result.npz", train = test_accuracy, test = test_accuracy, loss = loss)
-pyplot.figure()
-pyplot.plot(loss, 'b')
-pyplot.plot(train_accuracy, 'r')
-pyplot.plot(test_accuracy, 'g')
-pyplot.legend(('Loss', 'Train_Accuracy', 'Test_Accuracy'), loc='upper right')
-# pyplot.show()
-pyplot.savefig(os.path.join(root_folder, "result.png"), dpi = 600)
+# np.savez("result.npz", train = test_accuracy, test = test_accuracy, loss = loss)
+# pyplot.figure()
+# pyplot.plot(loss, 'b')
+# pyplot.plot(train_accuracy, 'r')
+# pyplot.plot(test_accuracy, 'g')
+# pyplot.legend(('Loss', 'Train_Accuracy', 'Test_Accuracy'), loc='upper right')
+# # pyplot.show()
+# pyplot.savefig(os.path.join(root_folder, "result.png"), dpi = 600)
 '''
 # def AddAccuracy(model, softmax, label):
 #     accuracy = brew.accuracy(model, [softmax, label], "accuracy")
