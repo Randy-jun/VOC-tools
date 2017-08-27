@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 from caffe2.python import brew
 
@@ -100,7 +101,7 @@ class MobileNetBuilder():
         )
         if spatial_batch_norm:
             self.add_spatial_bn(input_filters)
-        self.add_relu()
+        # self.add_relu()
 
         self.add_conv(
             input_filters,
@@ -111,7 +112,7 @@ class MobileNetBuilder():
         )
         if spatial_batch_norm:
             self.add_spatial_bn(output_filters)
-        self.add_relu()
+        # self.add_relu()
 
         # Keep track of number of high level components if this ResNetBuilder
         self.comp_count += 1
@@ -133,16 +134,17 @@ def create_mobilenet(
         32,
         weight_init=("MSRAFill", {}),
         kernel=3,
-        stride=1,
-        pad=1,
-        no_bias=True,
+        stride=2,
+        pad=2,
+        no_bias=False,
     )
     brew.spatial_bn(
         model, 'conv1', 'conv1_spatbn', 32, epsilon=1e-3, is_test=is_test
     )
-    brew.relu(model, 'conv1_spatbn', 'relu1')
+    # brew.relu(model, 'conv1_spatbn', 'relu1')
 
-    builder = MobileNetBuilder(model, 'relu1', no_bias=True, is_test=is_test)
+    # builder = MobileNetBuilder(model, 'conv1_spatbn', is_test=is_test)
+    builder = MobileNetBuilder(model, 'conv1_spatbn', no_bias=False, is_test=is_test)
 
     # block1
     builder.add_simple_block(input_filters=32, output_filters=64, down_sampling=False, spatial_batch_norm=True)
@@ -151,7 +153,7 @@ def create_mobilenet(
     # block3
     builder.add_simple_block(input_filters=128, output_filters=128, down_sampling=False, spatial_batch_norm=True)
     # block4
-    builder.add_simple_block(input_filters=128, output_filters=256, down_sampling=False, spatial_batch_norm=True)
+    builder.add_simple_block(input_filters=128, output_filters=256, down_sampling=True, spatial_batch_norm=True)
     # block5
     builder.add_simple_block(input_filters=256, output_filters=256, down_sampling=False, spatial_batch_norm=True)
     # block6
@@ -166,7 +168,7 @@ def create_mobilenet(
 
     # Final layers
     brew.average_pool(
-        model, builder.prev_blob, 'final_avg', kernel=4, stride=1)
+        model, builder.prev_blob, 'final_avg', kernel=7, stride=7)
     last_out = brew.fc(model, 'final_avg', 'last_out', 1024, num_labels)
 
     if (label is not None):
