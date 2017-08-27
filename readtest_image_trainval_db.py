@@ -15,12 +15,37 @@ import lmdb
 import cv2
 import numpy as np
 from caffe2.proto import caffe2_pb2
-from caffe2.python import workspace, model_helper
+from caffe2.python import workspace, model_helper, brew
 
 Image_width = 227
 Image_height = 227
-batch_size = 20
+batch_size = 10
 
+# def AddImageInput(model, reader, batch_size, img_size):
+#     '''
+#     Image input operator that loads data from reader and
+#     applies certain transformations to the images.
+#     '''
+#     data, label = brew.image_input(
+#         model,
+#         reader, ["data", "label"],
+#         batch_size=batch_size,
+#         use_caffe_datum=False,
+#         mean=128.,
+#         std=128.,
+#         minsize=227,
+#         crop=img_size,
+#         mirror=1
+#     )
+#     data = model.StopGradient(data, data)
+
+# def add_image_input(model):
+# 	AddImageInput(
+# 		model,
+#         reader,
+#         batch_size=batch_per_device,
+#         img_size=args.image_size,
+#     )
 
 def display(env):
 	txn = env.begin()
@@ -30,42 +55,54 @@ def display(env):
 		print(k, len(v))
 
 def read_data_db(dbpath):
-	count = []
-	db_env = lmdb.open(dbpath)#, map_size=int(1024*1024*1024*30)) # size:30GB
-	with db_env.begin() as txn:
-		cur = txn.cursor()
-		for k, v in cur: 
-			count.append(k)
+	# count = []
+	# db_env = lmdb.open(dbpath)#, map_size=int(1024*1024*1024*30)) # size:30GB
+	# with db_env.begin() as txn:
+	# 	cur = txn.cursor()
+	# 	for k, v in cur: 
+	# 		count.append(k)
 	# print(dir(db_env.info()))
 	# count = []
 	# with db_env.begin(write=True) as txn:
 	# 	txn = db_env.begin()
 	# 	count.append(display(db_env))
-	print(count[:3])
-	print(len(count))
-	np.save("trainval.npy", count)
+	# print(count[:3])
+	# print(len(count))
+	# np.save("trainval.npy", count)
 	# count = 50728
 
 	#==================
-	# model = model_helper.ModelHelper(name="lmdbtest")
+	model = model_helper.ModelHelper(name="lmdbtest")
 	# data, label = model.TensorProtosDBInput(
 	# 	[], ["data", "label"], batch_size = batch_size,
 	# 	db=dbpath, db_type="lmdb")
-	# workspace.RunNetOnce(model.param_init_net)
-	# workspace.CreateNet(model.net)
-	# for _ in range(0, 1):
-	# 	workspace.RunNet(model.net.Proto().name)
-	# 	img_datas = workspace.FetchBlob("data")
-	# 	print(img_datas.shape)
-	# 	labels = workspace.FetchBlob("label")
+	reader = model.CreateDB("test_reader",db=dbpath,db_type="lmdb")
+	data, label = brew.image_input(
+        model,
+        reader, ["data", "label"],
+        batch_size=batch_size,
+        use_caffe_datum=False,
+        mean=128.,
+        std=128.,
+        minsize=224,
+        crop=224,
+        mirror=1
+    )
+	workspace.RunNetOnce(model.param_init_net)
+	workspace.CreateNet(model.net)
+	for _ in range(0, 2):
+		workspace.RunNet(model.net.Proto().name)
+		img_datas = workspace.FetchBlob("data")
+		print(img_datas.shape)
+		labels = workspace.FetchBlob("label")
 
-	# 	for k in xrange(0, batch_size):
-	# 		img = img_datas[k]
-	# 		img = img.swapaxes(0, 1).swapaxes(1, 2)
-	# 		cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
-	# 		cv2.imshow('img', img)
-	# 		cv2.waitKey(0)
-	# 		cv2.destroyAllWindows()
+		for k in xrange(0, batch_size):
+			img = img_datas[k]
+			img = img.swapaxes(0, 1).swapaxes(1, 2)
+			cv2.namedWindow('img', cv2.WINDOW_AUTOSIZE)
+			cv2.imshow('img', img)
+			cv2.waitKey(0)
+			cv2.destroyAllWindows()
 
 def main():
 	# print(lmdb.version())
@@ -78,9 +115,9 @@ def main():
 	read_data_db(db_path)
 	# read_data_db("/home/yroot/data")
 	print("***********")
-	res = np.load("trainval.npy")
-	print(res[:3])
-	print(len(res))
+	# res = np.load("trainval.npy")
+	# print(res[:3])
+	# print(len(res))
 
 
 if __name__ == '__main__':

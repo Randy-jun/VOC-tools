@@ -14,9 +14,9 @@ def test():
 
 def main():
 	flag = False
-	if 1 == int(argv[1]):
+	if "stop" == argv[1]:
 		flag = True
-	elif 0 == int(argv[1]):
+	elif "" == argv[1]:
 		flag = False
 	else:
 		print("Argv must be 1 OR 0.")
