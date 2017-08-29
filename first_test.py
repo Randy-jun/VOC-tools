@@ -3,6 +3,38 @@
 
 import os
 import sys
+import lmdb
+import cv2
+import numpy as np
+
+from matplotlib import pyplot
+from caffe2.python import core, workspace
+
+current_folder = os.path.join(os.path.expanduser("~"), "data/VOCdevkit/dataDB")
+
+if not os.path.exists(current_folder):
+    print("%s is not exists." % current_folder)
+    exit(0)
+
+store_folder = os.path.join(current_folder, 'store_files')
+
+predict_net = os.path.join(store_folder, 'mobilenet_predict_net.pb')
+init_net = os.path.join(store_folder, 'mobilenet_init_net.pb')
+
+with open(init_net) as f:
+	exec_net = f.read()
+with open(predict_net) as f:
+	predict_net = f.read()
+
+print(type(exec_net), type(predict_net))
+
+p = workspace.Predictor(exec_net, predict_net)
+'''
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os
+import sys
 # import shutil
 # import random
 import lmdb
@@ -175,7 +207,7 @@ for dataset in datasets	:
 	# creat_data_lmdb(image_paths[:4], label_paths, dataset_file)
 
 
-'''
+
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 

@@ -101,7 +101,7 @@ class MobileNetBuilder():
         )
         if spatial_batch_norm:
             self.add_spatial_bn(input_filters)
-        # self.add_relu()
+        self.add_relu()
 
         self.add_conv(
             input_filters,
@@ -112,7 +112,7 @@ class MobileNetBuilder():
         )
         if spatial_batch_norm:
             self.add_spatial_bn(output_filters)
-        # self.add_relu()
+        self.add_relu()
 
         # Keep track of number of high level components if this ResNetBuilder
         self.comp_count += 1
