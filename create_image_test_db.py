@@ -29,10 +29,10 @@ Image_height = 224
 batch_size = 50
 
 def display(env):
-	txn = env.begin()
-	cur = txn.cursor()
-	for k, v in cur:
-		print(k, len(v))
+    txn = env.begin()
+    cur = txn.cursor()
+    for k, v in cur:
+        print(k, len(v))
 
 def create_data_db(dbpath, img_path, lab):
     db_env = lmdb.open(dbpath, map_size=int(1024*1024*1024*30)) # size:30GB
@@ -80,6 +80,9 @@ def create_data_db(dbpath, img_path, lab):
 
         label_tensor = tensor_protos.protos.add()
         label_tensor.data_type = 2
+#=======================test=============================
+        # label_tensor.int32_data.append(k)
+#=========================================================
         label_tensor.int32_data.append(lab_v)
 
 
@@ -138,108 +141,115 @@ def read_data_db(dbpath):
 
 
 def main():
-	# print(lmdb.version())
-	label_paths = os.path.expanduser("~/data/VOCdevkit/test/label/label_subonly.txt")
+    # print(lmdb.version())
+    label_paths = os.path.expanduser("~/data/VOCdevkit/test/label/label_subonly.txt")
 
-	image_paths = []
-	labels = []
+    image_paths = []
+    labels = []
 
-	with open(label_paths, 'r') as fi:
-		lsof = fi.readlines()
-		# print(len(lsof))
-		for lof in lsof:
-			image_paths.append(lof.split()[0])
-			labels.append(lof.split()[1].find("1"))
-			# labels.append(lof.split()[1])#.count("1"))
-		fi.close()
+    with open(label_paths, 'r') as fi:
+        lsof = fi.readlines()
+        # print(len(lsof))
+        for lof in lsof:
+            image_paths.append(lof.split()[0])
+            labels.append(lof.split()[1].find("1"))
+            # labels.append(lof.split()[1])#.count("1"))
+        fi.close()
 
-		img_sub = []
-		lab_sub = []
+        img_sub = []
+        lab_sub = []
 
-		img_top_bottom = []
-		lab_top_bottom = []
+        img_top_bottom = []
+        lab_top_bottom = []
 
-		img_left_right = []
-		lab_left_right = []
+        img_left_right = []
+        lab_left_right = []
 
-		img_quarter = []
-		lab_quarter = []
+        img_quarter = []
+        lab_quarter = []
 
 
-	for k, value in enumerate(image_paths):
-		if "sub" == value[-7:-4]:
-			img_sub.append(value)
-			lab_sub.append(labels[k])
-		elif "21" == value[-6:-4] or "22" == value[-6:-4]:
-			img_top_bottom.append(value)
-			lab_top_bottom.append(labels[k])
-		elif "23" == value[-6:-4] or "24" == value[-6:-4]:
-			img_left_right.append(value)
-			lab_left_right.append(labels[k])
-		elif value[-6:-5] == "4":
-			img_quarter.append(value)
-			lab_quarter.append(labels[k])
-		else:
-			print("Error!!!")
-			exit()
+    for k, value in enumerate(image_paths):
+        if "sub" == value[-7:-4]:
+            img_sub.append(value)
+            lab_sub.append(labels[k])
+        elif "21" == value[-6:-4] or "22" == value[-6:-4]:
+            img_top_bottom.append(value)
+            lab_top_bottom.append(labels[k])
+        elif "23" == value[-6:-4] or "24" == value[-6:-4]:
+            img_left_right.append(value)
+            lab_left_right.append(labels[k])
+        elif value[-6:-5] == "4":
+            img_quarter.append(value)
+            lab_quarter.append(labels[k])
+        else:
+            print("Error!!!")
+            exit()
 
-	# print(img_sub)
-	# print("==============")
-	# print(lab_sub)
-	# print("==============")
+    # print(img_sub)
+    # print("==============")
+    # print(lab_sub)
+    # print("==============")
 
-	# print(img_top_bottom)
-	# print("==============")
-	# print(lab_top_bottom)
-	# print("==============")
+    # print(img_top_bottom)
+    # print("==============")
+    # print(lab_top_bottom)
+    # print("==============")
 
-	# print(img_left_right)
-	# print("==============")
-	# print(lab_left_right)
-	# print("==============")
+    # print(img_left_right)
+    # print("==============")
+    # print(lab_left_right)
+    # print("==============")
 
-	# print(img_quarter)
-	# print("==============")
-	# print(lab_quarter)
-	# print("==============")
+    # print(img_quarter)
+    # print("==============")
+    # print(lab_quarter)
+    # print("==============")
 
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_sub_lmdb")
-	# create_data_db(db_path, img_sub[:200], lab_sub[:200])
-	create_data_db(db_path, img_sub, lab_sub)
+    # db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
+    db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_sub_lmdb")
+    # create_data_db(db_path, img_sub[:200], lab_sub[:200])
 
-	read_data_db(db_path)
-	print(db_path + "is OK!")
+#=======================test=============================
+    db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/test_lmdb")
+    create_data_db(db_path, img_sub[:2000], lab_sub[:2000])
+    print("OK!")
+    exit(0)
+#=========================================================
+    create_data_db(db_path, img_sub, lab_sub)
 
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_top_bottom_lmdb")
-	# create_data_db(db_path, img_top_bottom[:200], lab_top_bottom[:200])
-	create_data_db(db_path, img_top_bottom, lab_top_bottom)
-	read_data_db(db_path)
+    read_data_db(db_path)
+    print(db_path + "is OK!")
 
-	print(db_path + " is OK!")
+    # db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
+    db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_top_bottom_lmdb")
+    # create_data_db(db_path, img_top_bottom[:200], lab_top_bottom[:200])
+    create_data_db(db_path, img_top_bottom, lab_top_bottom)
+    read_data_db(db_path)
 
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_left_right_lmdb")
-	# create_data_db(db_path, img_left_right[:200], lab_left_right[:200])
-	create_data_db(db_path, img_left_right, lab_left_right)
-	read_data_db(db_path)
+    print(db_path + " is OK!")
 
-	print(db_path + "is OK!")
+    # db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
+    db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_left_right_lmdb")
+    # create_data_db(db_path, img_left_right[:200], lab_left_right[:200])
+    create_data_db(db_path, img_left_right, lab_left_right)
+    read_data_db(db_path)
 
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_quarter_lmdb")
-	# create_data_db(db_path, img_quarter[:200], lab_quarter[:200])
-	create_data_db(db_path, img_quarter, lab_quarter)
-	read_data_db(db_path)
+    print(db_path + "is OK!")
 
-	print(db_path + "is OK!")
+    # db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
+    db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_quarter_lmdb")
+    # create_data_db(db_path, img_quarter[:200], lab_quarter[:200])
+    create_data_db(db_path, img_quarter, lab_quarter)
+    read_data_db(db_path)
 
-	# create_data_db(db_path, image_paths, labels)
-	# create_data_db(db_path, image_paths[:200], labels[:200])
-	# read_data_db(db_path)
-	# read_data_db("/home/yroot/data")
+    print(db_path + "is OK!")
+
+    # create_data_db(db_path, image_paths, labels)
+    # create_data_db(db_path, image_paths[:200], labels[:200])
+    # read_data_db(db_path)
+    # read_data_db("/home/yroot/data")
 
 
 if __name__ == '__main__':
-	main()
+    main()

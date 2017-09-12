@@ -3,32 +3,84 @@
 
 import os
 import sys
-import lmdb
 import cv2
 import numpy as np
 
 from matplotlib import pyplot
-from caffe2.python import core, workspace
+from caffe2.python import core, workspace, model_helper
+from caffe2.proto import caffe2_pb2
+import caffe2.python.predictor.predictor_exporter as pred_exp
 
 current_folder = os.path.join(os.path.expanduser("~"), "data/VOCdevkit/dataDB")
-
 if not os.path.exists(current_folder):
     print("%s is not exists." % current_folder)
     exit(0)
 
 store_folder = os.path.join(current_folder, 'store_files')
-
+# chekpoint_path = os.path.join(store_folder, 'mobilenet_pred.mdl')
 predict_net = os.path.join(store_folder, 'mobilenet_predict_net.pb')
+# predict_net = os.path.join(store_folder, 'predict_net.pb')
 init_net = os.path.join(store_folder, 'mobilenet_init_net.pb')
+# init_net = os.path.join(store_folder, 'init_net.pb')
+
+# workspace.ResetWorkspace()
+
+# device_opts = caffe2_pb2.DeviceOption()
+# device_opts.device_type = caffe2_pb2.CUDA
+# device_opts.cuda_gpu_id = 0
+# pred_arg_scope = {
+#     'order': "NCHW",
+#     'use_cudnn': True,
+#     'cudnn_exhaustive_search': True,
+# }
+# pred_model = model_helper.ModelHelper(
+#     name="mobilenet_test", arg_scope=pred_arg_scope
+# )
 
 with open(init_net) as f:
-	exec_net = f.read()
+	init_net = f.read()
 with open(predict_net) as f:
 	predict_net = f.read()
+# print(init_net)
+# exit(0)
+# predict_net.RunAllOnGPU()
+# init_net.RunAllOnGPU()
 
-print(type(exec_net), type(predict_net))
+# pred_model.param_init_net = init_net
+# pred_model.net = predict_net
+# print(type(init_net), type(predict_net))
+# inputs = np.zeros((1,3,224,224), dtype='i')
 
-p = workspace.Predictor(exec_net, predict_net)
+# workspace.RunNetOnce(pred_model.param_init_net)
+# workspace.CreateNet(pred_model.net)
+# workspace.RunNetOnce(init_net)
+# workspace.CreateNet(predict_net)
+p = workspace.Predictor(init_net, predict_net)
+
+
+# print(workspace.FetchBlob("softmax"))
+
+img = cv2.imread("./test.jpg", cv2.IMREAD_COLOR)#.astype(np.uint8)
+img = cv2.resize(img, (224, 224), interpolation = cv2.INTER_AREA)
+img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+img = img.swapaxes(1, 2).swapaxes(0, 1)
+img = img[np.newaxis, :, :, :].astype(np.float32)
+
+# workspace.FeedBlob("data", img)
+
+# workspace.RunNetOnce("mobilenet_deploy")
+
+# print(workspace.Blobs())
+# print(workspace.FetchBlob("softmax"))
+img = img.reshape(np.prod(img.shape))
+
+# workspace.FeedBlob("gpu_0/data", inputs)
+# print(workspace.FetchBlob("gpu_0/data"))
+
+result = p.run([img])
+print(result[0])
+print(result[0].shape)
+
 '''
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-

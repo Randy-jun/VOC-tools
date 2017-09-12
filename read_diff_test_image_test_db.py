@@ -17,9 +17,6 @@ import numpy as np
 from caffe2.proto import caffe2_pb2
 from caffe2.python import workspace, model_helper
 
-Image_width = 227
-Image_height = 227
-batch_size = 20
 
 def display(env):
 	txn = env.begin()
@@ -35,7 +32,7 @@ def read_data_db(dbpath, cla):
 		for k, v in cur: 
 			count.append(k)
 
-	print(count[:3])
+	print(count[:10])
 	print(len(count))
 	name = cla + "_count.npy"
 	np.save(name, count)
@@ -72,56 +69,23 @@ def read_data_db(dbpath, cla):
 	# 		cv2.destroyAllWindows()
 
 def main():
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/test_lmdb")
-	read_data_db(db_path, "test")
+	
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/diff_percent_test.lmdb")
+	read_data_db(db_path, "diff_percent")
 	print("***********")
-	res1 = np.load("test_count.npy")
-	print(res1[:3])
+	res1 = np.load("diff_percent_count.npy")
+	print(res1[:10])
 	print(len(res1))
 	print(db_path + " is OK!")
-	exit(0)
 
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_sub_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_sub_lmdb")
-	read_data_db(db_path, "sub")
+	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/diff_test.lmdb")
+	read_data_db(db_path, "diff")
 	print("***********")
-	res1 = np.load("sub_count.npy")
-	print(res1[:3])
+	res1 = np.load("diff_count.npy")
+	print(res1[:10])
 	print(len(res1))
 	print(db_path + "is OK!")
 	# 12032
-
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_top_bottom_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_top_bottom_lmdb")
-	read_data_db(db_path, "top")
-	print("***********")
-	res2 = np.load("top_count.npy")
-	print(res2[:3])
-	print(len(res2))
-	print(db_path + " is OK!")
-	#24064
-
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_left_right_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_left_right_lmdb")
-	read_data_db(db_path, "left")
-	print("***********")
-	res3 = np.load("left_count.npy")
-	print(res3[:3])
-	print(len(res3))
-	print(db_path + "is OK!")
-	#24064
-
-	# db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_200_quarter_lmdb")
-	db_path = os.path.expanduser("~/data/VOCdevkit/dataDB/testDB_quarter_lmdb")
-	read_data_db(db_path, "qua")
-	print("***********")
-	res4 = np.load("qua_count.npy")
-	print(res4[:3])
-	print(len(res4))
-	print(db_path + "is OK!")
-	#48128
-
 
 if __name__ == '__main__':
 	main()

@@ -70,7 +70,7 @@ if not os.path.exists(store_folder):
     os.makedirs(store_folder)
 
 finetune = None
-finetune = os.path.join(store_folder, 'mobilenet_61.mdl')
+finetune = os.path.join(store_folder, 'mobilenet_26.mdl')
 #=================================================
 if finetune is not None:
     loa = np.load("result.npz")
@@ -338,7 +338,7 @@ def Train(args):
         return [loss]
 
     def add_optimizer(model):
-        stepsz = int(200 * args.epoch_size / total_batch_size / num_shards)
+        stepsz = int(30 * args.epoch_size / total_batch_size / num_shards)
         optimizer.add_weight_decay(model, args.weight_decay)
         optimizer.build_sgd(
             model,

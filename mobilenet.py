@@ -119,7 +119,7 @@ class MobileNetBuilder():
 
 
 def create_mobilenet(
-        model, data, num_input_channels, num_labels, label, is_test=False
+        model, data, num_input_channels, num_labels, label=None, is_test=False
 ):
     '''
     Create residual net for smaller images (sec 4.2 of He et. al (2015))
